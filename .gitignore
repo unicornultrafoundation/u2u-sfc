@@ -1,0 +1,12 @@
+.idea/
+node_modules
+build
+coverage
+coverage.json
+/.coverage_artifacts/
+/.coverage_contracts/
+/coverageEnv/
+/coverageEnv/
+artifacts/
+cache/
+.env
