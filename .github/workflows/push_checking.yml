@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [12.x]
+        node-version: [14.16.0]
 
     steps:
       - name: Checkout
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [12.x]
+        node-version: [14.16.0]
 
     steps:
       - name: Checkout
@@ -39,11 +39,14 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
+      - name: Set environment
+        run: export NPM_CONFIG_PREFIX=~
+
       - name: Install dependencies
-        run: npm install
+        run: npm install --no-save
 
       - name: Install Truffle
-        run: npm install -g truffle
+        run: npm install --no-save truffle@5.2.4
 
       - name: Run tests
         run: npm run test
