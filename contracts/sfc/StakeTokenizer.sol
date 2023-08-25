@@ -12,39 +12,39 @@ contract Spacer {
 contract StakeTokenizer is Spacer, Initializable {
     SFC internal sfc;
 
-    mapping(address => mapping(uint256 => uint256)) public outstandingSFTM;
+    mapping(address => mapping(uint256 => uint256)) public outstandingSU2U;
 
-    address public sFTMTokenAddress;
+    address public sU2UTokenAddress;
 
-    function initialize(address payable _sfc, address _sFTMTokenAddress) public initializer {
+    function initialize(address payable _sfc, address _sU2UTokenAddress) public initializer {
         sfc = SFC(_sfc);
-        sFTMTokenAddress = _sFTMTokenAddress;
+        sU2UTokenAddress = _sU2UTokenAddress;
     }
 
-    function mintSFTM(uint256 toValidatorID) external {
-        revert("sFTM minting is disabled");
+    function mintSU2U(uint256 toValidatorID) external {
+        revert("sU2U minting is disabled");
 //        address delegator = msg.sender;
 //        uint256 lockedStake = sfc.getLockedStake(delegator, toValidatorID);
 //        require(lockedStake > 0, "delegation isn't locked up");
-//        require(lockedStake > outstandingSFTM[delegator][toValidatorID], "sFTM is already minted");
+//        require(lockedStake > outstandingSU2U[delegator][toValidatorID], "sU2U is already minted");
 //
-//        uint256 diff = lockedStake - outstandingSFTM[delegator][toValidatorID];
-//        outstandingSFTM[delegator][toValidatorID] = lockedStake;
+//        uint256 diff = lockedStake - outstandingSU2U[delegator][toValidatorID];
+//        outstandingSU2U[delegator][toValidatorID] = lockedStake;
 //
-//        // It's important that we mint after updating outstandingSFTM (protection against Re-Entrancy)
-//        require(ERC20Mintable(sFTMTokenAddress).mint(delegator, diff), "failed to mint sFTM");
+//        // It's important that we mint after updating outstandingSU2U (protection against Re-Entrancy)
+//        require(ERC20Mintable(sU2UTokenAddress).mint(delegator, diff), "failed to mint sU2U");
     }
 
-    function redeemSFTM(uint256 validatorID, uint256 amount) external {
-        require(outstandingSFTM[msg.sender][validatorID] >= amount, "low outstanding sFTM balance");
-        require(IERC20(sFTMTokenAddress).allowance(msg.sender, address(this)) >= amount, "insufficient allowance");
-        outstandingSFTM[msg.sender][validatorID] -= amount;
+    function redeemSU2U(uint256 validatorID, uint256 amount) external {
+        require(outstandingSU2U[msg.sender][validatorID] >= amount, "low outstanding sU2U balance");
+        require(IERC20(sU2UTokenAddress).allowance(msg.sender, address(this)) >= amount, "insufficient allowance");
+        outstandingSU2U[msg.sender][validatorID] -= amount;
 
-        // It's important that we burn after updating outstandingSFTM (protection against Re-Entrancy)
-        ERC20Burnable(sFTMTokenAddress).burnFrom(msg.sender, amount);
+        // It's important that we burn after updating outstandingSU2U (protection against Re-Entrancy)
+        ERC20Burnable(sU2UTokenAddress).burnFrom(msg.sender, amount);
     }
 
     function allowedToWithdrawStake(address sender, uint256 validatorID) public view returns(bool) {
-        return outstandingSFTM[sender][validatorID] == 0;
+        return outstandingSU2U[sender][validatorID] == 0;
     }
 }

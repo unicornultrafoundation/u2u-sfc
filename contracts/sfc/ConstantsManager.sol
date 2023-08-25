@@ -7,15 +7,15 @@ import "../common/Decimal.sol";
 contract ConstantsManager is Ownable {
     using SafeMath for uint256;
 
-    // Minimum amount of stake for a validator, i.e., 500000 FTM
+    // Minimum amount of stake for a validator, i.e., 1000000 U2U
     uint256 public minSelfStake;
-    // Maximum ratio of delegations a validator can have, say, 15 times of self-stake
+    // Maximum ratio of delegations a validator can have, say, 10 times of self-stake
     uint256 public maxDelegatedRatio;
     // The commission fee in percentage a validator will get from a delegation, e.g., 15%
     uint256 public validatorCommission;
-    // The percentage of fees to burn, e.g., 20%
+    // The percentage of fees to burn, e.g., 5%
     uint256 public burntFeeShare;
-    // The percentage of fees to transfer to treasury address, e.g., 10%
+    // The percentage of fees to transfer to treasury address, e.g., 20%
     uint256 public treasuryFeeShare;
     // The ratio of the reward rate at base rate (no lock), e.g., 30%
     uint256 public unlockedRewardRatio;
