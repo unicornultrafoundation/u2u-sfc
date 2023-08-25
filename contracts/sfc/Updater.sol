@@ -45,11 +45,11 @@ contract Updater {
 
         ConstantsManager consts = ConstantsManager(sfcConsts);
         consts.initialize();
-        consts.updateMinSelfStake(500000 * 1e18);
-        consts.updateMaxDelegatedRatio(16 * Decimal.unit());
+        consts.updateMinSelfStake(1000000 * 1e18);
+        consts.updateMaxDelegatedRatio(10 * Decimal.unit());
         consts.updateValidatorCommission((15 * Decimal.unit()) / 100);
-        consts.updateBurntFeeShare((20 * Decimal.unit()) / 100);
-        consts.updateTreasuryFeeShare((10 * Decimal.unit()) / 100);
+        consts.updateBurntFeeShare((5 * Decimal.unit()) / 100);
+        consts.updateTreasuryFeeShare((20 * Decimal.unit()) / 100);
         consts.updateUnlockedRewardRatio((30 * Decimal.unit()) / 100);
         consts.updateMinLockupDuration(86400 * 14);
         consts.updateMaxLockupDuration(86400 * 365);

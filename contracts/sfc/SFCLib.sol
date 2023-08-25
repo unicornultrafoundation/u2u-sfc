@@ -13,8 +13,8 @@ contract SFCLib is SFCBase {
     event Withdrawn(address indexed delegator, uint256 indexed toValidatorID, uint256 indexed wrID, uint256 amount);
     event ClaimedRewards(address indexed delegator, uint256 indexed toValidatorID, uint256 lockupExtraReward, uint256 lockupBaseReward, uint256 unlockedReward);
     event RestakedRewards(address indexed delegator, uint256 indexed toValidatorID, uint256 lockupExtraReward, uint256 lockupBaseReward, uint256 unlockedReward);
-    event InflatedFTM(address indexed receiver, uint256 amount, string justification);
-    event BurntFTM(uint256 amount);
+    event InflatedU2U(address indexed receiver, uint256 amount, string justification);
+    event BurntU2U(uint256 amount);
     event LockedUpStake(address indexed delegator, uint256 indexed validatorID, uint256 duration, uint256 amount);
     event UnlockedStake(address indexed delegator, uint256 indexed validatorID, uint256 amount, uint256 penalty);
     event UpdatedSlashingRefundRatio(uint256 indexed validatorID, uint256 refundRatio);
@@ -192,7 +192,7 @@ contract SFCLib is SFCBase {
 
         require(amount > 0, "zero amount");
         require(amount <= getUnlockedStake(delegator, toValidatorID), "not enough unlocked stake");
-        require(_checkAllowedToWithdraw(delegator, toValidatorID), "outstanding sFTM balance");
+        require(_checkAllowedToWithdraw(delegator, toValidatorID), "outstanding sU2U balance");
 
         require(getWithdrawalRequest[delegator][toValidatorID][wrID].amount == 0, "wrID already exists");
 
@@ -227,7 +227,7 @@ contract SFCLib is SFCBase {
         address payable delegator = msg.sender;
         WithdrawalRequest memory request = getWithdrawalRequest[delegator][toValidatorID][wrID];
         require(request.epoch != 0, "request doesn't exist");
-        require(_checkAllowedToWithdraw(delegator, toValidatorID), "outstanding sFTM balance");
+        require(_checkAllowedToWithdraw(delegator, toValidatorID), "outstanding sU2U balance");
 
         uint256 requestTime = request.time;
         uint256 requestEpoch = request.epoch;
@@ -248,8 +248,8 @@ contract SFCLib is SFCBase {
         require(amount > penalty, "stake is fully slashed");
         // It's important that we transfer after erasing (protection against Re-Entrancy)
         (bool sent,) = delegator.call.value(amount.sub(penalty))("");
-        require(sent, "Failed to send FTM");
-        _burnFTM(penalty);
+        require(sent, "Failed to send U2U");
+        _burnU2U(penalty);
 
         emit Withdrawn(delegator, toValidatorID, wrID, amount);
     }
@@ -365,7 +365,7 @@ contract SFCLib is SFCBase {
     }
 
     function _claimRewards(address delegator, uint256 toValidatorID) internal returns (Rewards memory rewards) {
-        require(_checkAllowedToWithdraw(delegator, toValidatorID), "outstanding sFTM balance");
+        require(_checkAllowedToWithdraw(delegator, toValidatorID), "outstanding sU2U balance");
         _stashRewards(delegator, toValidatorID);
         rewards = _rewardsStash[delegator][toValidatorID];
         uint256 totalReward = rewards.unlockedReward.add(rewards.lockupBaseReward).add(rewards.lockupExtraReward);
@@ -381,7 +381,7 @@ contract SFCLib is SFCBase {
         Rewards memory rewards = _claimRewards(delegator, toValidatorID);
         // It's important that we transfer after erasing (protection against Re-Entrancy)
         (bool sent,) = delegator.call.value(rewards.lockupExtraReward.add(rewards.lockupBaseReward).add(rewards.unlockedReward))("");
-        require(sent, "Failed to send FTM");
+        require(sent, "Failed to send U2U");
 
         emit ClaimedRewards(delegator, toValidatorID, rewards.lockupExtraReward, rewards.lockupBaseReward, rewards.unlockedReward);
     }
@@ -396,23 +396,23 @@ contract SFCLib is SFCBase {
         emit RestakedRewards(delegator, toValidatorID, rewards.lockupExtraReward, rewards.lockupBaseReward, rewards.unlockedReward);
     }
 
-    // mintFTM allows SFC owner to mint an arbitrary amount of FTM tokens
-    // justification is a human readable description of why tokens were minted (e.g. because ERC20 FTM tokens were burnt)
-    function mintFTM(address payable receiver, uint256 amount, string calldata justification) onlyOwner external {
+    // mintU2U allows SFC owner to mint an arbitrary amount of U2U tokens
+    // justification is a human readable description of why tokens were minted (e.g. because ERC20 U2U tokens were burnt)
+    function mintU2U(address payable receiver, uint256 amount, string calldata justification) onlyOwner external {
         _mintNativeToken(amount);
         receiver.transfer(amount);
-        emit InflatedFTM(receiver, amount, justification);
+        emit InflatedU2U(receiver, amount, justification);
     }
 
-    // burnFTM allows SFC to burn an arbitrary amount of FTM tokens
-    function burnFTM(uint256 amount) onlyOwner external {
-        _burnFTM(amount);
+    // burnU2U allows SFC to burn an arbitrary amount of U2U tokens
+    function burnU2U(uint256 amount) onlyOwner external {
+        _burnU2U(amount);
     }
 
-    function _burnFTM(uint256 amount) internal {
+    function _burnU2U(uint256 amount) internal {
         if (amount != 0) {
             address(0).transfer(amount);
-            emit BurntFTM(amount);
+            emit BurntU2U(amount);
         }
     }
 
@@ -494,7 +494,7 @@ contract SFCLib is SFCBase {
         require(amount > 0, "zero amount");
         require(isLockedUp(delegator, toValidatorID), "not locked up");
         require(amount <= ld.lockedStake, "not enough locked stake");
-        require(_checkAllowedToWithdraw(delegator, toValidatorID), "outstanding sFTM balance");
+        require(_checkAllowedToWithdraw(delegator, toValidatorID), "outstanding sU2U balance");
 
         _stashRewards(delegator, toValidatorID);
 
@@ -507,7 +507,7 @@ contract SFCLib is SFCBase {
         ld.lockedStake -= amount;
         if (penalty != 0) {
             _rawUndelegate(delegator, toValidatorID, penalty, true);
-            _burnFTM(penalty);
+            _burnU2U(penalty);
         }
 
         emit UnlockedStake(delegator, toValidatorID, amount, penalty);

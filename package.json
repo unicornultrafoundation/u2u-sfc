@@ -41,7 +41,7 @@
     "type": "git",
     "url": "https://github.com/unicornultrafoundation/u2u-sfc.git"
   },
-  "author": "Unicorn Ultra Foundation",
+  "author": "Uniultra Foundation",
   "license": "MIT",
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.1",

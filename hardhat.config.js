@@ -19,18 +19,18 @@ module.exports = {
       url: 'http://127.0.0.1:8545'
     },
     mainnet: {
-      url: 'https://rpcapi.fantom.network',
-      chainId: 250
+      url: 'https://rpc-mainnet.uniultra.xyz',
+      chainId: 39
     },
     testnet: {
-      url: 'https://rpc.testnet.fantom.network',
-      chainId: 4002,
+      url: 'https://rpc-nebulas-testnet.uniultra.xyz',
+      chainId: 2484,
       accounts: [`0x${PRIVATE_KEY}`]
     }
   },
   etherscan: {
     apiKey: {
-      ftmTestnet: API_KEY
+      u2uTestnet: API_KEY
     }
   },
   contractSizer: {
