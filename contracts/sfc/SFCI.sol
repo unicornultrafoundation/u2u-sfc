@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.5.0.0;
 
 interface SFCI {
     function currentSealedEpoch() external view returns (uint256);
