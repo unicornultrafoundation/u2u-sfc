@@ -23,7 +23,7 @@ contract NetworkInitializer {
         consts.updateMaxLockupDuration(86400 * 365);
         consts.updateWithdrawalPeriodEpochs(3);
         consts.updateWithdrawalPeriodTime(60 * 60 * 24 * 7);
-        consts.updateBaseRewardPerSecond(4756468798000000000);
+        consts.updateBaseRewardPerSecond(3802651753849535500);
         consts.updateOfflinePenaltyThresholdTime(5 days);
         consts.updateOfflinePenaltyThresholdBlocksNum(1000);
         consts.updateTargetGasPowerPerSecond(2000000);
@@ -34,3 +34,5 @@ contract NetworkInitializer {
         selfdestruct(address(0));
     }
 }
+
+
