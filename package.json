@@ -39,9 +39,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Fantom-foundation/opera-sfc.git"
+    "url": "https://github.com/unicornultrafoundation/u2u-sfc.git"
   },
-  "author": "Fantom Foundation",
+  "author": "Uniultra Foundation",
   "license": "MIT",
   "dependencies": {
     "@nomiclabs/hardhat-ethers": "^2.2.1",

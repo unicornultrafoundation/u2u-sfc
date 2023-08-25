@@ -1656,7 +1656,7 @@ contract('SFC', async ([firstValidator, testValidator, firstDelegator, secondDel
             await sealEpoch(this.sfc, (new BN(60 * 60 * 24 * 14)).toString());
         });
 
-        it('Should not unlock if not locked up FTM', async () => {
+        it('Should not unlock if not locked up U2U', async () => {
             await sealEpoch(this.sfc, (new BN(1000)).toString());
 
             await this.sfc.delegate(testValidator3ID, {

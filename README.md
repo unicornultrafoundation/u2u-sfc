@@ -176,7 +176,7 @@ false
       ✓ Should not be able to lock more than validator lockup period (273ms)
       ✓ Should not be able to lock more than validator lockup period (260ms)
       ✓ Should be able to lock for 1 month (417ms)
-      ✓ Should not unlock if not locked up FTM (453ms)
+      ✓ Should not unlock if not locked up U2U (453ms)
       ✓ Should not be able to unlock more than locked stake (464ms)
       ✓ Should unlock after period ended and stash rewards (834ms)
 
