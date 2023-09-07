@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [14.16.0]
+        node-version: [18.16.1]
 
     steps:
       - name: Checkout
@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [14.16.0]
+        node-version: [18.16.1]
 
     steps:
       - name: Checkout
