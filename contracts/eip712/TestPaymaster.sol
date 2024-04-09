@@ -33,8 +33,9 @@ contract TestPaymaster is IPaymaster, EIP712 {
         bytes memory _authenticationSignature,
         Transaction calldata _transaction
     ) external payable returns (bytes4 magic, bytes memory context) {
-        address recoverAddress = ECDSA.recover(signDataMessage(_suggestedSignedHash), _authenticationSignature);
-        require(recoverAddress == owner, "Paymaster: Unauthorized signature");
+        if (_suggestedSignedHash == 0x0) {
+            return (0x00000000, context);
+        }
         return (PAYMASTER_VALIDATION_SUCCESS_MAGIC, context);
     }
 
