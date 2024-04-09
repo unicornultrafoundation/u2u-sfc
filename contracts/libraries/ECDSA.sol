@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
+// OpenZeppelin Contracts (last updated v5.0.0) (utils/cryptography/ECDSA.sol)
 
-pragma solidity >=0.6.2;
+pragma solidity ^0.8.20;
 
 /**
  * @dev Elliptic Curve Digital Signature Algorithm (ECDSA) operations.
@@ -94,7 +95,7 @@ library ECDSA {
     /**
      * @dev Overload of {ECDSA-tryRecover} that receives the `r` and `vs` short-signature fields separately.
      *
-     * See https://eips.ethereum.org/EIPS/eip-2098[EIP-2098 short signatures]
+     * See https://eips.ethereum.org/EIPS/eip-2098[ERC-2098 short signatures]
      */
     function tryRecover(bytes32 hash, bytes32 r, bytes32 vs) internal pure returns (address, RecoverError, bytes32) {
         unchecked {
@@ -168,26 +169,6 @@ library ECDSA {
             revert ECDSAInvalidSignatureLength(uint256(errorArg));
         } else if (error == RecoverError.InvalidSignatureS) {
             revert ECDSAInvalidSignatureS(errorArg);
-        }
-    }
-
-    /**
-     * @dev Returns the keccak256 digest of an EIP-712 typed data (EIP-191 version `0x01`).
-     *
-     * The digest is calculated from a `domainSeparator` and a `structHash`, by prefixing them with
-     * `\x19\x01` and hashing the result. It corresponds to the hash signed by the
-     * https://eips.ethereum.org/EIPS/eip-712[`eth_signTypedData`] JSON-RPC method as part of EIP-712.
-     *
-     * See {ECDSA-recover}.
-     */
-    function toTypedDataHash(bytes32 domainSeparator, bytes32 structHash) internal pure returns (bytes32 digest) {
-        /// @solidity memory-safe-assembly
-        assembly {
-            let ptr := mload(0x40)
-            mstore(ptr, hex"19_01")
-            mstore(add(ptr, 0x02), domainSeparator)
-            mstore(add(ptr, 0x22), structHash)
-            digest := keccak256(ptr, 0x42)
         }
     }
 }

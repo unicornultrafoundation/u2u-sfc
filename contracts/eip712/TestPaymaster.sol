@@ -21,7 +21,7 @@ contract TestPaymaster is IPaymaster, EIP712 {
     }
 
     function signDataMessage(bytes32 suggestedSignedHash) internal view returns (bytes32) {
-        return ECDSA.toTypedDataHash(_domainSeparatorV4(), keccak256(abi.encode(
+        return _hashTypedDataV4(keccak256(abi.encode(
             signDataTypeHash(),
             suggestedSignedHash
         )));
