@@ -34,7 +34,9 @@ contract TestPaymaster is IPaymaster, EIP712 {
         Transaction calldata _transaction
     ) external payable returns (bytes4 magic, bytes memory context) {
         if (_suggestedSignedHash == 0x0) {
-            return (0x00000000, context);
+            return (0x00000001, context);
+        } else {
+            require(_suggestedSignedHash != bytes32(uint256(1)), "Paymaster: Test revert");
         }
         return (PAYMASTER_VALIDATION_SUCCESS_MAGIC, context);
     }
