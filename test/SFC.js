@@ -1,3 +1,7 @@
+/* eslint-disable radix */
+/* eslint-disable no-await-in-loop */
+/* eslint-disable guard-for-in */
+/* eslint-disable no-plusplus */
 const { BN, expectRevert } = require('@openzeppelin/test-helpers');
 const chai = require('chai');
 const { expect } = require('chai');
@@ -198,6 +202,7 @@ contract('SFC', async ([account1, account2]) => {
     describe('Genesis Validator', () => {
         beforeEach(async () => {
             await this.sfc.enableNonNodeCalls();
+            // eslint-disable-next-line no-bitwise
             await expect(this.sfc.setGenesisValidator(account1, 1, pubkey, 1 << 3, await this.sfc.currentEpoch(), Date.now(), 0, 0)).to.be.fulfilled;
             await this.sfc.disableNonNodeCalls();
         });
@@ -285,7 +290,7 @@ contract('SFC', async ([firstValidator, secondValidator, thirdValidator]) => {
             });
 
             it('Reverts on transfers', async () => {
-                await expectRevert(web3.eth.sendTransaction({from: secondValidator, to: this.sfc.address, value: 1 }), 'transfers not allowed');
+                await expectRevert(web3.eth.sendTransaction({ from: secondValidator, to: this.sfc.address, value: 1 }), 'transfers not allowed');
             });
 
             it('Should create a Validator and return the ID', async () => {
@@ -637,7 +642,6 @@ contract('SFC', async ([firstValidator, secondValidator, thirdValidator, firstDe
     });
 
     describe('EpochSnapshot', () => {
-        let validator;
         beforeEach(async () => {
             this.sfc = await SFCI.at((await UnitTestSFC.new()).address);
             const nodeIRaw = await NodeDriver.new();
@@ -654,7 +658,7 @@ contract('SFC', async ([firstValidator, secondValidator, thirdValidator, firstDe
             await this.sfc.delegate(1, { from: firstDelegator, value: amount18('11') });
             await this.sfc.delegate(1, { from: secondDelegator, value: amount18('8') });
             await this.sfc.delegate(1, { from: thirdDelegator, value: amount18('8') });
-            validator = await this.sfc.getValidator(1);
+            await this.sfc.getValidator(1);
         });
 
         it('Returns stashedRewardsUntilEpoch', async () => {
@@ -786,9 +790,6 @@ contract('SFC', async ([firstValidator, secondValidator, thirdValidator, firstDe
             expect(firstValidatorID).to.be.bignumber.equal(new BN('1'));
             expect(secondValidatorID).to.be.bignumber.equal(new BN('2'));
 
-            const firstValidatorObj = await this.sfc.getValidator.call(firstValidatorID);
-            const secondValidatorObj = await this.sfc.getValidator.call(secondValidatorID);
-
             await this.node.handle(await this.sfc.delegate(firstValidatorID, {
                 from: firstValidator,
                 value: amount18('0.1'),
@@ -882,10 +883,9 @@ contract('SFC', async ([firstValidator, secondValidator, thirdValidator, firstDe
     });
 });
 
-contract('SFC', async ([firstValidator, secondValidator, thirdValidator, testValidator, firstDelegator, secondDelegator, account1, account2, account3, account4]) => {
+contract('SFC', async ([firstValidator, secondValidator, thirdValidator,, firstDelegator, secondDelegator, account1, account2]) => {
     let firstValidatorID;
     let secondValidatorID;
-    let thirdValidatorID;
 
     beforeEach(async () => {
         this.sfc = await SFCI.at((await UnitTestSFC.new()).address);
@@ -915,7 +915,7 @@ contract('SFC', async ([firstValidator, secondValidator, thirdValidator, testVal
             from: thirdValidator,
             value: amount18('0.8'),
         });
-        thirdValidatorID = await this.sfc.getValidatorID(thirdValidator);
+        await this.sfc.getValidatorID(thirdValidator);
         await this.sfc.delegate(firstValidatorID, {
             from: firstValidator,
             value: amount18('0.4'),
@@ -1271,6 +1271,7 @@ contract('SFC', async ([firstValidator, secondValidator, thirdValidator, testVal
 
     describe('NodeDriver', () => {
         it('Should not be able to call `setGenesisValidator` if not NodeDriver', async () => {
+            // eslint-disable-next-line no-bitwise
             await expectRevert(this.nodeI.setGenesisValidator(account1, 1, pubkey, 1 << 3, await this.sfc.currentEpoch(), Date.now(), 0, 0, {
                 from: account2,
             }), 'caller is not the NodeDriver contract');
@@ -1443,7 +1444,7 @@ contract('SFC', async ([firstValidator, firstDelegator]) => {
     });
 });
 
-contract('SFC', async ([firstValidator, testValidator, firstDelegator, secondDelegator, thirdDelegator, account1, account2, account3]) => {
+contract('SFC', async ([firstValidator,,,, thirdDelegator, account1, account2, account3]) => {
     let testValidator1ID;
     let testValidator2ID;
     let testValidator3ID;
@@ -1550,9 +1551,8 @@ contract('SFC', async ([firstValidator, testValidator, firstDelegator, secondDel
     });
 });
 
-contract('SFC', async ([firstValidator, testValidator, firstDelegator, secondDelegator, thirdDelegator, account1, account2, account3]) => {
+contract('SFC', async ([firstValidator,,,, thirdDelegator, account1, account2, account3]) => {
     let testValidator1ID;
-    let testValidator2ID;
     let testValidator3ID;
 
     beforeEach(async () => {
@@ -1587,7 +1587,6 @@ contract('SFC', async ([firstValidator, testValidator, firstDelegator, secondDel
         await sealEpoch(this.sfc, (new BN(0)).toString());
 
         testValidator1ID = await this.sfc.getValidatorID(account1);
-        testValidator2ID = await this.sfc.getValidatorID(account2);
         testValidator3ID = await this.sfc.getValidatorID(account3);
 
         await this.sfc.lockStake(testValidator3ID, (60 * 60 * 24 * 364), amount18('1'),
@@ -1751,10 +1750,8 @@ contract('SFC', async ([firstValidator, testValidator, firstDelegator, secondDel
     });
 });
 
-contract('SFC', async ([firstValidator, testValidator, firstDelegator, secondDelegator, thirdDelegator, account1, account2, account3]) => {
-    let testValidator1ID;
-    let testValidator2ID;
-    let testValidator3ID;
+contract('SFC', async ([firstValidator,,,,, account1, account2, account3]) => {
+    let testValidator;
 
     beforeEach(async () => {
         this.sfc = await SFCI.at((await UnitTestSFC.new()).address);
@@ -1787,11 +1784,11 @@ contract('SFC', async ([firstValidator, testValidator, firstDelegator, secondDel
 
         await sealEpoch(this.sfc, (new BN(0)).toString());
 
-        testValidator1ID = await this.sfc.getValidatorID(account1);
-        testValidator2ID = await this.sfc.getValidatorID(account2);
-        testValidator3ID = await this.sfc.getValidatorID(account3);
+        await this.sfc.getValidatorID(account1);
+        await this.sfc.getValidatorID(account2);
+        testValidator = await this.sfc.getValidatorID(account3);
 
-        await this.sfc.lockStake(testValidator3ID, (60 * 60 * 24 * 364), amount18('1'),
+        await this.sfc.lockStake(testValidator, (60 * 60 * 24 * 364), amount18('1'),
             { from: account3 });
 
         await sealEpoch(this.sfc, (new BN(0)).toString());
@@ -1801,7 +1798,7 @@ contract('SFC', async ([firstValidator, testValidator, firstDelegator, secondDel
         it('Should not update slashing refund ratio', async () => {
             await sealEpoch(this.sfc, (new BN(1000)).toString());
 
-            await expectRevert(this.sfc.updateSlashingRefundRatio(testValidator3ID, 1, {
+            await expectRevert(this.sfc.updateSlashingRefundRatio(testValidator, 1, {
                 from: firstValidator,
             }), "validator isn't slashed");
 

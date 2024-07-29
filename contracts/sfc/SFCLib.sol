@@ -1,4 +1,5 @@
-pragma solidity ^0.5.0.0;
+pragma solidity ^0.5.0;
+
 
 import "../common/Decimal.sol";
 import "./GasPriceConstants.sol";
@@ -441,26 +442,29 @@ contract SFCLib is SFCBase {
     function _lockStake(address delegator, uint256 toValidatorID, uint256 lockupDuration, uint256 amount) internal {
         require(amount <= getUnlockedStake(delegator, toValidatorID), "not enough stake");
         require(getValidator[toValidatorID].status == OK_STATUS, "validator isn't active");
-
-        require(lockupDuration >= c.minLockupDuration() && lockupDuration <= c.maxLockupDuration(), "incorrect duration");
-        uint256 endTime = _now().add(lockupDuration);
+        uint256 duration = lockupDuration;
+        require(duration >= c.minLockupDuration() && duration <= c.maxLockupDuration(), "incorrect duration");
+        uint256 endTime = _now().add(duration);
         address validatorAddr = getValidator[toValidatorID].auth;
         if (delegator != validatorAddr) {
-            require(getLockupInfo[validatorAddr][toValidatorID].endTime >= endTime, "validator lockup period will end earlier");
+            if (getLockupInfo[validatorAddr][toValidatorID].endTime >= endTime) {
+                endTime = getLockupInfo[validatorAddr][toValidatorID].endTime;
+                duration = endTime.sub(_now());
+            }
         }
 
         _stashRewards(delegator, toValidatorID);
 
         // check lockup duration after _stashRewards, which has erased previous lockup if it has unlocked already
         LockedDelegation storage ld = getLockupInfo[delegator][toValidatorID];
-        require(lockupDuration >= ld.duration, "lockup duration cannot decrease");
+        require(duration >= ld.duration, "lockup duration cannot decrease");
 
         ld.lockedStake = ld.lockedStake.add(amount);
         ld.fromEpoch = currentEpoch();
         ld.endTime = endTime;
-        ld.duration = lockupDuration;
+        ld.duration = duration;
 
-        emit LockedUpStake(delegator, toValidatorID, lockupDuration, amount);
+        emit LockedUpStake(delegator, toValidatorID, duration, amount);
     }
 
     function lockStake(uint256 toValidatorID, uint256 lockupDuration, uint256 amount) public {
@@ -468,6 +472,14 @@ contract SFCLib is SFCBase {
         require(amount > 0, "zero amount");
         require(!isLockedUp(delegator, toValidatorID), "already locked up");
         _lockStake(delegator, toValidatorID, lockupDuration, amount);
+    }
+
+    function lockStakeWithEndTime(uint256 toValidatorID, uint256 endTime, uint256 amount) public {
+        address delegator = msg.sender;
+        require(amount > 0, "zero amount");
+        require(endTime > now(), "invalid endtime");
+        require(!isLockedUp(delegator, toValidatorID), "already locked up");
+        _lockStake(delegator, toValidatorID, endTime.sub(now), amount);
     }
 
     function relockStake(uint256 toValidatorID, uint256 lockupDuration, uint256 amount) public {
