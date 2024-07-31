@@ -1,10 +1,5 @@
-require('@nomiclabs/hardhat-waffle');
-require('@nomiclabs/hardhat-ethers');
+require('@nomicfoundation/hardhat-toolbox');
 require('@nomiclabs/hardhat-truffle5');
-require('@nomiclabs/hardhat-web3');
-require('@openzeppelin/test-helpers');
-require('hardhat-contract-sizer');
-require('@nomiclabs/hardhat-etherscan');
 require('dotenv').config();
 
 const { PRIVATE_KEY } = process.env;
@@ -25,7 +20,7 @@ module.exports = {
         testnet: {
             url: 'https://rpc-nebulas-testnet.uniultra.xyz',
             chainId: 2484,
-            accounts: [`0x${PRIVATE_KEY}`],
+            accounts: PRIVATE_KEY ? [`0x${PRIVATE_KEY}`] : [],
         },
     },
     etherscan: {

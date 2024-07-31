@@ -169,7 +169,8 @@ contract SFC is SFCBase, Version {
         if (treasuryAddress != address(0)) {
             uint256 feeShare = ctx.epochFee * c.treasuryFeeShare() / Decimal.unit();
             _mintNativeToken(feeShare);
-            treasuryAddress.call.value(feeShare)("");
+            (bool success, ) = treasuryAddress.call.value(feeShare)("");
+             require(success, "Address: unable to send value, recipient may have reverted");
         }
     }
 

@@ -22,20 +22,6 @@ contract StakeTokenizer is Spacer, Initializable {
         sU2UTokenAddress = _sU2UTokenAddress;
     }
 
-    function mintSU2U(uint256 toValidatorID) external {
-        revert("sU2U minting is disabled");
-//        address delegator = msg.sender;
-//        uint256 lockedStake = sfc.getLockedStake(delegator, toValidatorID);
-//        require(lockedStake > 0, "delegation isn't locked up");
-//        require(lockedStake > outstandingSU2U[delegator][toValidatorID], "sU2U is already minted");
-//
-//        uint256 diff = lockedStake - outstandingSU2U[delegator][toValidatorID];
-//        outstandingSU2U[delegator][toValidatorID] = lockedStake;
-//
-//        // It's important that we mint after updating outstandingSU2U (protection against Re-Entrancy)
-//        require(ERC20Mintable(sU2UTokenAddress).mint(delegator, diff), "failed to mint sU2U");
-    }
-
     function redeemSU2U(uint256 validatorID, uint256 amount) external {
         require(outstandingSU2U[msg.sender][validatorID] >= amount, "low outstanding sU2U balance");
         require(IERC20(sU2UTokenAddress).allowance(msg.sender, address(this)) >= amount, "insufficient allowance");

@@ -7,13 +7,14 @@
     "lint:js-fix": "eslint \"test/*.js\" --fix",
     "lint": "npm run lint:sol",
     "lint:sol": "solhint \"contracts/**/*.sol\"",
-    "build": "truffle build",
-    "test": "truffle test",
-    "truffle": "truffle",
-    "flatten": "rm -rf contracts/Flattened.sol && truffle-flattener contracts/sfc/SFC.sol >> contracts/Flattened.sol"
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "flatten": "hardhat flatten",
+    "start:node": "hardhat node"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "^2.5.1",
+    "@openzeppelin/test-helpers": "^0.5.16",
     "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.7.0",
     "babel-register": "^6.26.0",
@@ -29,12 +30,12 @@
     "eslint-plugin-react": "^7.14.3",
     "eslint-plugin-react-hooks": "^1.7.0",
     "ethereumjs-testrpc-sc": "^6.5.1-sc.0",
+    "hardhat": "^2.22.6",
     "karma": "^4.3.0",
     "lodash": "^4.17.15",
     "openzeppelin-test-helpers": "^0.4.3",
     "solhint": "^3.3.4",
-    "solidity-coverage": "^0.7.15",
-    "truffle-flattener": "^1.5.0",
+    "web3": "^1.10.4",
     "web3-utils": "^1.2.1"
   },
   "repository": {
@@ -44,14 +45,10 @@
   "author": "Uniultra Foundation",
   "license": "MIT",
   "dependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.2.1",
-    "@nomiclabs/hardhat-etherscan": "^3.1.3",
     "@nomiclabs/hardhat-truffle5": "^2.0.7",
-    "@nomiclabs/hardhat-waffle": "^2.0.3",
     "@nomiclabs/hardhat-web3": "^2.0.0",
-    "@openzeppelin/test-helpers": "^0.5.16",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "dotenv": "^16.0.3",
-    "hardhat-contract-sizer": "^2.6.1",
     "npm": "^7.6.3"
   }
 }
