@@ -58,6 +58,17 @@ contract SFCState is Initializable, Ownable {
         uint256 fromEpoch;
         uint256 endTime;
         uint256 duration;
+        
+    }
+    
+    struct LockedDelegationV2 {
+        uint256 lockedStake;
+        uint256 fromEpoch;
+        uint256 endTime;
+        uint256 duration;
+        uint256 stashedLockupExtraReward;
+        uint256 stashedLockupBaseReward;
+        uint256 stashedRewardsUntilEpoch;
     }
 
     mapping(address => mapping(uint256 => uint256)) public getStake;
@@ -65,6 +76,11 @@ contract SFCState is Initializable, Ownable {
     mapping(address => mapping(uint256 => LockedDelegation)) public getLockupInfo;
 
     mapping(address => mapping(uint256 => Rewards)) public getStashedLockupRewards;
+
+    // delegatorAddress => validatorId => LockedDelegationV2[]
+    mapping(address => mapping(uint256 => LockedDelegationV2[])) public delegatorLockStakes;
+    mapping(address => mapping(uint256 => uint256)) public totalDelegatorLockStakes;
+    mapping(address => mapping(uint256 => uint256)) public totalLockStakes;
 
     struct EpochSnapshot {
         mapping(uint256 => uint256) receivedStake;

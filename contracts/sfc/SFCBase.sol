@@ -127,8 +127,20 @@ contract SFCBase is SFCState {
         return getLockupInfo[delegator][toValidatorID].lockedStake;
     }
 
+    function getLockedStake(address delegator, uint256 toValidatorID,uint256 lId) public view returns (uint256) {
+        if (!isLockedUp(delegator, toValidatorID, lId)) {
+            return 0;
+        }
+        return getLockupInfo[delegator][toValidatorID].lockedStake;
+    }
+
     function isLockedUp(address delegator, uint256 toValidatorID) view public returns (bool) {
         return getLockupInfo[delegator][toValidatorID].endTime != 0 && getLockupInfo[delegator][toValidatorID].lockedStake != 0 && _now() <= getLockupInfo[delegator][toValidatorID].endTime;
+    }
+
+    function isLockedUp(address delegator, uint256 toValidatorID, uint256 lId) view public returns (bool) {
+        LockedDelegationV2 memory ld = delegatorLockStakes[delegator][toValidatorID][lId];
+        return ld.endTime != 0 && ld.lockedStake != 0 && _now() <= ld.endTime;
     }
 
     function _now() internal view returns (uint256) {
