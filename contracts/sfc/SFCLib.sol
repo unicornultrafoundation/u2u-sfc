@@ -302,7 +302,7 @@ contract SFCLib is SFCBase {
 
     // find highest epoch such that _isLockedUpAtEpoch returns true (using binary search)
     function _highestLockupEpoch(address delegator, uint256 validatorID, uint256 lId) internal view returns (uint256) {
-        uint256 l = delegatorLockStakes[delegator][validatorID][lId].fromEpoch;
+        uint256 l = getLockupInfoV2[delegator][validatorID][lId].fromEpoch;
         uint256 r = currentSealedEpoch;
         if (_isLockedUpAtEpoch(delegator, validatorID,lId, r)) {
             return r;
@@ -339,7 +339,7 @@ contract SFCLib is SFCBase {
         }
 
         LockedDelegation storage ld = getLockupInfo[delegator][toValidatorID];
-        uint256 wholeStake = getStake[delegator][toValidatorID];
+        uint256 wholeStake = getStake[delegator][toValidatorID].sub(totalLockupBalance[delegator][toValidatorID]);
         uint256 unlockedStake = wholeStake.sub(ld.lockedStake);
         uint256 fullReward;
 
@@ -357,7 +357,7 @@ contract SFCLib is SFCBase {
     }
     
     function _newRewards(address delegator, uint256 toValidatorID, uint256 lId) internal view returns (Rewards memory) {
-        LockedDelegationV2 memory ld = delegatorLockStakes[delegator][toValidatorID][lId];
+        LockedDelegationV2 memory ld = getLockupInfoV2[delegator][toValidatorID][lId];
         uint256 stashedUntil = ld.stashedRewardsUntilEpoch;
         uint256 payableUntil = _highestPayableEpoch(toValidatorID);
         uint256 lockedUntil = _highestLockupEpoch(delegator, toValidatorID, lId);
@@ -371,7 +371,6 @@ contract SFCLib is SFCBase {
         // count reward for locked stake during lockup epochs
         uint256 fullReward = _newRewardsOf(ld.lockedStake, toValidatorID, stashedUntil, lockedUntil);
         Rewards memory plReward = _scaleLockupReward(fullReward, ld.duration);
-        
         return plReward;
     }
 
@@ -402,7 +401,7 @@ contract SFCLib is SFCBase {
 
     function pendingRewards(address delegator, uint256 toValidatorID,uint256 start, uint256 end) public view returns (uint256) {
         require(start < end, "invalid start");
-        uint256 totalRecords = delegatorLockStakes[delegator][toValidatorID].length;
+        uint256 totalRecords = getLockupInfoV2[delegator][toValidatorID].length;
 
         Rewards memory reward = _pendingRewards(delegator, toValidatorID);
         for (uint256 i = start; i < end; i ++) {
@@ -416,7 +415,7 @@ contract SFCLib is SFCBase {
 
     function stashRewards(address delegator, uint256 toValidatorID, uint256 start, uint256 end) external {
         require(start < end, "invalid start");
-        uint256 totalRecords = delegatorLockStakes[delegator][toValidatorID].length;
+        uint256 totalRecords = getLockupInfoV2[delegator][toValidatorID].length;
         for (uint256 i = start; i < end; i ++) {
             if (totalRecords <= i) {
                 return;
@@ -442,19 +441,14 @@ contract SFCLib is SFCBase {
     }
 
     function _stashRewards(address delegator, uint256 toValidatorID, uint256 lId) internal returns (bool updated) {
-        LockedDelegationV2 storage ld = delegatorLockStakes[delegator][toValidatorID][lId];
+        LockedDelegationV2 storage ld = getLockupInfoV2[delegator][toValidatorID][lId];
 
         Rewards memory nonStashedReward = _newRewards(delegator, toValidatorID, lId);
         ld.stashedRewardsUntilEpoch = _highestPayableEpoch(toValidatorID);
         _rewardsStash[delegator][toValidatorID] = sumRewards(_rewardsStash[delegator][toValidatorID], nonStashedReward);
         ld.stashedLockupExtraReward = ld.stashedLockupExtraReward.add(nonStashedReward.lockupExtraReward);
         ld.stashedLockupBaseReward =ld.stashedLockupBaseReward.add(nonStashedReward.lockupBaseReward);
-
-        if (!isLockedUp(delegator, toValidatorID,lId)) {
-            delete getLockupInfo[delegator][toValidatorID];
-            delete getStashedLockupRewards[delegator][toValidatorID];
-        }
-        return nonStashedReward.lockupBaseReward != 0 || nonStashedReward.lockupExtraReward != 0 || nonStashedReward.unlockedReward != 0;
+        return nonStashedReward.lockupBaseReward != 0 || nonStashedReward.lockupExtraReward != 0;
     }
 
     function _claimRewards(address delegator, uint256 toValidatorID) internal returns (Rewards memory rewards) {
@@ -522,7 +516,7 @@ contract SFCLib is SFCBase {
 
         uint256 lockupReward = rewards.lockupExtraReward.add(rewards.lockupBaseReward);
         _delegate(delegator, toValidatorID, lockupReward.add(rewards.unlockedReward));
-        delegatorLockStakes[delegator][toValidatorID][lId].lockedStake += lockupReward;
+        getLockupInfoV2[delegator][toValidatorID][lId].lockedStake += lockupReward;
         emit RestakedRewards(delegator, toValidatorID, rewards.lockupExtraReward, rewards.lockupBaseReward, rewards.unlockedReward);
     }
 
@@ -555,7 +549,7 @@ contract SFCLib is SFCBase {
     }
 
     function _isLockedUpAtEpoch(address delegator, uint256 toValidatorID, uint256 lId, uint256 epoch) internal view returns (bool) {
-        LockedDelegationV2 memory ld = delegatorLockStakes[delegator][toValidatorID][lId];
+        LockedDelegationV2 memory ld = getLockupInfoV2[delegator][toValidatorID][lId];
         return ld.fromEpoch <= epoch && epochEndTime(epoch) <= ld.endTime;
     }
 
@@ -567,14 +561,12 @@ contract SFCLib is SFCBase {
     }
 
     function getUnlockedStake(address delegator, uint256 toValidatorID) public view returns (uint256) {
-        uint256 unlockStakes = 0;
+        uint256 unlockStakes = getStake[delegator][toValidatorID].sub(totalLockupBalance[delegator][toValidatorID]);
 
-        if (!isLockedUp(delegator, toValidatorID)) {
-            unlockStakes = getStake[delegator][toValidatorID];
-        } else {
-            unlockStakes = getStake[delegator][toValidatorID].sub(getLockupInfo[delegator][toValidatorID].lockedStake);
+        if (isLockedUp(delegator, toValidatorID)) {
+            unlockStakes = unlockStakes.sub(getLockupInfo[delegator][toValidatorID].lockedStake);
         }
-        return unlockStakes.sub(totalDelegatorLockStakes[delegator][toValidatorID]);
+        return unlockStakes;
     }
 
     function _lockStake(address delegator, uint256 toValidatorID, uint256 lockupDuration, uint256 amount) internal {
@@ -627,7 +619,7 @@ contract SFCLib is SFCBase {
     }
 
     function _popDelegationUnlockPenalty(address delegator, uint256 toValidatorID, uint256 lId, uint256 unlockAmount, uint256 totalAmount) internal returns (uint256) {
-        LockedDelegationV2 storage ld = delegatorLockStakes[delegator][toValidatorID][lId];
+        LockedDelegationV2 storage ld = getLockupInfoV2[delegator][toValidatorID][lId];
         
         uint256 lockupExtraRewardShare = ld.stashedLockupExtraReward.mul(unlockAmount).div(totalAmount);
         uint256 lockupBaseRewardShare =ld.stashedLockupBaseReward.mul(unlockAmount).div(totalAmount);
@@ -679,56 +671,62 @@ contract SFCLib is SFCBase {
     /// ----------------------------------
     function createLockStake(uint256 validatorId, uint256 duration, uint256 amount) external {
         address delAddr = msg.sender;
-
+        require(amount > 0, "zero amount");
         require(duration >= c.minLockupDuration() && duration <= c.maxLockupDuration(), "incorrect duration");
         require(amount <= getUnlockedStake(delAddr, validatorId), "not enough stake");
         require(getValidator[validatorId].status == OK_STATUS, "validator isn't active");
         
-
         uint256 endTime = _now().add(duration);
         require(getLockupInfo[getValidator[validatorId].auth][validatorId].endTime >= endTime, "validator lockup period will end earlier");
 
         _stashRewards(delAddr, validatorId);
 
-        delegatorLockStakes[delAddr][validatorId].push(LockedDelegationV2({
+        getLockupInfoV2[delAddr][validatorId].push(LockedDelegationV2({
             lockedStake: amount,
             fromEpoch: currentEpoch(),
             duration: duration,
             endTime: endTime,
             stashedLockupBaseReward: 0,
             stashedLockupExtraReward: 0,
-            stashedRewardsUntilEpoch: 0
+            stashedRewardsUntilEpoch: stashedRewardsUntilEpoch[delAddr][validatorId]
         }));
 
-        totalDelegatorLockStakes[delAddr][validatorId] += amount;
-        totalDelegatorLockStakes[delAddr][validatorId]++;
+        totalLockupBalance[delAddr][validatorId] += amount;
+        totalLockupItems[delAddr][validatorId]++;
     }
 
-    function unlockStake(uint256 validatorId, uint256 lockStakeIdx, uint256 amount) external {
+    function unlockStake(uint256 validatorId, uint256 lockStakeIdx, uint256 amount) external returns (uint256){
         address delAddr = msg.sender;
-        uint256 totalLock = delegatorLockStakes[delAddr][validatorId].length;
-        require(totalLock > lockStakeIdx, "invalid lock stake idx");
-        require(delegatorLockStakes[delAddr][validatorId][lockStakeIdx].lockedStake > amount, "invalid amount");
+        uint256 totalLock = getLockupInfoV2[delAddr][validatorId].length;
+        require(totalLock > lockStakeIdx, "not locked up");
+        require(getLockupInfoV2[delAddr][validatorId][lockStakeIdx].lockedStake >= amount, "not enough locked stake");
 
         _stashRewards(delAddr, validatorId, lockStakeIdx);
 
-        LockedDelegationV2 storage lockStakeInfo = delegatorLockStakes[delAddr][validatorId][lockStakeIdx];
+        LockedDelegationV2 storage ld = getLockupInfoV2[delAddr][validatorId][lockStakeIdx];
         uint256 penalty = 0;
-        if (lockStakeInfo.endTime < _now()) {
-            penalty = _popDelegationUnlockPenalty(delAddr, validatorId, lockStakeIdx, amount, lockStakeInfo.lockedStake);
+        if (ld.endTime > _now()) {
+            penalty = _popDelegationUnlockPenalty(delAddr, validatorId, lockStakeIdx, amount, ld.lockedStake);
         }
         
-        lockStakeInfo.lockedStake -= amount;
-        totalDelegatorLockStakes[delAddr][validatorId] -= lockStakeInfo.lockedStake;
+        ld.lockedStake -= amount;
+        totalLockupBalance[delAddr][validatorId] -= amount;
         
-        if (lockStakeInfo.lockedStake ==0) {
-            delegatorLockStakes[delAddr][validatorId][lockStakeIdx] = delegatorLockStakes[delAddr][validatorId][totalLock-1];
-            delegatorLockStakes[delAddr][validatorId].pop();
+        if (ld.lockedStake ==0) {
+            getLockupInfoV2[delAddr][validatorId][lockStakeIdx] = getLockupInfoV2[delAddr][validatorId][totalLock-1];
+            getLockupInfoV2[delAddr][validatorId].pop();
         }
 
         if (penalty != 0) {
             _rawUndelegate(delAddr, validatorId, penalty, true);
             _burnU2U(penalty);
         }
+
+        return penalty;
+    }
+
+    function getDelegatorLockStake(address delAddr, uint256 valIdx, uint256 lId) external view returns (uint256 stashedLockupExtraReward, uint256 stashedLockupBaseReward)  {
+        LockedDelegationV2 memory ld = getLockupInfoV2[delAddr][valIdx][lId];
+        return  (ld.stashedLockupExtraReward, ld.stashedLockupBaseReward);
     }
 }

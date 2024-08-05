@@ -139,7 +139,7 @@ contract SFCBase is SFCState {
     }
 
     function isLockedUp(address delegator, uint256 toValidatorID, uint256 lId) view public returns (bool) {
-        LockedDelegationV2 memory ld = delegatorLockStakes[delegator][toValidatorID][lId];
+        LockedDelegationV2 memory ld = getLockupInfoV2[delegator][toValidatorID][lId];
         return ld.endTime != 0 && ld.lockedStake != 0 && _now() <= ld.endTime;
     }
 
