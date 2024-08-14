@@ -90,7 +90,7 @@ interface SFCUnitTestIV2 {
 
     function deactivateValidator(uint256 validatorID, uint256 status) external;
 
-    function pendingRewards(address delegator, uint256 toValidatorID,uint256 start, uint256 end) external view returns (uint256);
+    function pendingRewards(address delegator, uint256 toValidatorID,uint256 lId) external view returns (uint256);
 
     function stashRewards(address delegator, uint256 toValidatorID) external;
 
