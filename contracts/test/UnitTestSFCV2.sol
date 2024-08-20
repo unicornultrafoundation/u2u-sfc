@@ -92,9 +92,9 @@ interface SFCUnitTestIV2 {
 
     function pendingRewards(address delegator, uint256 toValidatorID,uint256 lId) external view returns (uint256);
 
-    function stashRewards(address delegator, uint256 toValidatorID) external;
+    function stashRewards(address delegator, uint256 toValidatorID, uint256 idx) external;
 
-    function claimRewards(uint256 toValidatorID) external;
+    function claimRewards(uint256 toValidatorID, uint256 lId) external;
 
     function restakeRewards(uint256 toValidatorID) external;
 
@@ -124,7 +124,7 @@ interface SFCUnitTestIV2 {
 
     function lockStake(uint256 toValidatorID, uint256 lockupDuration, uint256 amount) external;
 
-    function relockStake(uint256 toValidatorID, uint256 lockupDuration, uint256 amount) external;
+    function relockStake(uint256 toValidatorID, uint256 lId, uint256 lockupDuration, uint256 amount) external;
 
     function initialize(uint256 sealedEpoch, uint256 _totalSupply, address nodeDriver, address lib, address consts, address _owner) external;
 
@@ -157,6 +157,10 @@ interface SFCUnitTestIV2 {
     function createLockStake(uint256 validatorId, uint256 duration, uint256 amount) external;
     function unlockStake(uint256 validatorId, uint256 lockStakeIdx, uint256 amount) external returns (uint256);
     function getDelegatorLockStake(address delAddr, uint256 valIdx, uint256 lId) external view returns (uint256 stashedLockupExtraReward, uint256 stashedLockupBaseReward);
+
+    function setAuthorizedRelockAddress(uint256 valId, address addr) external;
+    function setEnabledAutoRelock(uint256 valId, bool enabled) external;
+    function relockByAuthorizedAddress(uint256 valId) external;
 }
 
 

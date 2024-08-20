@@ -123,4 +123,6 @@ contract SFCState is Initializable, Ownable {
     ConstantsManager internal c;
 
     address public voteBookAddress;
+
+    mapping(uint256 => bool) isEnableAutoRelock;
 }

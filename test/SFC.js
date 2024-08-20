@@ -1860,6 +1860,13 @@ contract('SFC', async ([firstValidator,,,, thirdDelegator, account1, account2, a
         await sealEpoch(this.sfc, (new BN(0)).toString());
     });
 
+    describe('auto validator relock', () => {
+        it('should not be able to relock', async () => {
+            await sealEpoch(this.sfc, (new BN(1000)).toString());
+            await expectRevert(this.sfc.relockByAuthorizedAddress(testValidator1ID, { from: thirdDelegator }), 'only authorized Address');
+        });
+    });
+
     describe('lock stake v2', () => {
         it('Should not be able to lock 0 amount', async () => {
             await sealEpoch(this.sfc, (new BN(1000)).toString());
@@ -2004,7 +2011,7 @@ contract('SFC', async ([firstValidator,,,, thirdDelegator, account1, account2, a
             unlockedStake = await this.sfc.getUnlockedStake(thirdDelegator, testValidator3ID, { from: thirdDelegator });
             expect(unlockedStake.toString()).to.equal('10000000000000000000');
 
-            // await this.sfc.stashRewards(thirdDelegator, testValidator3ID, 0, { from: thirdDelegator });
+            await expectRevert(this.sfc.stashRewards(thirdDelegator, testValidator3ID, 1, { from: thirdDelegator }), 'nothing to stash');
         });
     });
 });
