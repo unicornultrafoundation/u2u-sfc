@@ -310,4 +310,38 @@ contract('SFC', async ([firstValidator,,,, thirdDelegator, account1, account2, a
             await this.sfc.relockStake(testValidator3ID, 1, 60 * 60 * 24 * 14, amount18('1'), { from: thirdDelegator });
         });
     });
+
+    describe('claim reward', () => {
+        it('Should return claimed Rewards until Epoch', async () => {
+            await this.consts.updateBaseRewardPerSecond(new BN('1'));
+
+            await this.sfc.delegate(testValidator3ID, {
+                from: thirdDelegator,
+                value: amount18('10'),
+            });
+
+            await this.sfc.createLockStake(testValidator3ID, (60 * 60 * 24 * 14), amount18('1'),
+                { from: thirdDelegator });
+
+            await sealEpoch(this.sfc, (new BN(60 * 60 * 24)).toString());
+            await sealEpoch(this.sfc, (new BN(60 * 60 * 24)).toString());
+
+            let ld = await this.sfc.getDelegatorLockStake(thirdDelegator, testValidator3ID, 1);
+            expect(ld[5]).to.bignumber.equal(new BN(2));
+
+            const firstDelegatorPendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, 1);
+            const firstDelegatorBalance = new BN(await web3.eth.getBalance(thirdDelegator));
+
+            await this.sfc.claimRewards(testValidator3ID, [1], { from: thirdDelegator });
+            const pendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, 1);
+            const delegatorBalance = new BN(await web3.eth.getBalance(thirdDelegator));
+
+            expect(firstDelegatorBalance.add(firstDelegatorPendingRewards)).to.be.bignumber.above(delegatorBalance);
+            expect(firstDelegatorBalance.add(firstDelegatorPendingRewards)).to.be.bignumber.below(delegatorBalance.add(amount18('0.01')));
+
+            ld = await this.sfc.getDelegatorLockStake(thirdDelegator, testValidator3ID, 1);
+            expect(ld[5]).to.bignumber.equal(await this.sfc.currentSealedEpoch());
+            expect(pendingRewards).to.bignumber.equal(BN(0));
+        });
+    });
 });

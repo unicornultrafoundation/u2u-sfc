@@ -873,7 +873,6 @@ contract SFCLib is SFCBase {
             _checkAllowedToWithdraw(delegator, toValidatorID),
             "outstanding sU2U balance"
         );
-        _stashRewards(delegator, toValidatorID);
         _stashRewards(delegator, toValidatorID, lId);
         rewards = _rewardsStash[delegator][toValidatorID];
         uint256 totalReward = rewards
