@@ -1414,12 +1414,23 @@ contract SFCLib is SFCBase {
         external
         view
         returns (
+            uint256 fromEpoch,
+            uint256 endTime,
+            uint256 duration,
             uint256 stashedLockupExtraReward,
-            uint256 stashedLockupBaseReward
+            uint256 stashedLockupBaseReward,
+            uint256 stashedRewardsUntilEpoch
         )
     {
         LockedDelegationV2 memory ld = getLockupInfoV2[delAddr][valIdx][lId];
-        return (ld.stashedLockupExtraReward, ld.stashedLockupBaseReward);
+        return (
+            ld.fromEpoch,
+            ld.endTime,
+            ld.duration,
+            ld.stashedLockupExtraReward,
+            ld.stashedLockupBaseReward,
+            ld.stashedRewardsUntilEpoch
+        );
     }
 
     function setEnabledAutoRelock(uint256 valId, bool enabled) external {

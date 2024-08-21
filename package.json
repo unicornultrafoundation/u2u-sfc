@@ -10,7 +10,8 @@
     "compile": "hardhat compile",
     "test": "hardhat test",
     "flatten": "hardhat flatten",
-    "start:node": "hardhat node"
+    "start:node": "hardhat node",
+    "coverage": "npx hardhat coverage"
   },
   "devDependencies": {
     "@openzeppelin/contracts": "^2.5.1",
