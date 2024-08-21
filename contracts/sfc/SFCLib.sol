@@ -1413,6 +1413,7 @@ contract SFCLib is SFCBase {
         external
         view
         returns (
+            uint256 lockedStake,
             uint256 fromEpoch,
             uint256 endTime,
             uint256 duration,
@@ -1423,6 +1424,7 @@ contract SFCLib is SFCBase {
     {
         LockedDelegationV2 memory ld = getLockupInfoV2[delAddr][valIdx][lId];
         return (
+            ld.lockedStake,
             ld.fromEpoch,
             ld.endTime,
             ld.duration,

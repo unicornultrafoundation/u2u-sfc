@@ -186,8 +186,7 @@ interface SFCUnitTestIV2 {
     ) external;
 
     function claimRewards(uint256 toValidatorID, uint256 lId) external;
-
-    function restakeRewards(uint256 toValidatorID) external;
+    function restakeRewards(uint256 toValidatorID, uint256 lId) external;
 
     function offlinePenaltyThreshold()
         external
@@ -328,6 +327,7 @@ interface SFCUnitTestIV2 {
         external
         view
         returns (
+            uint256 lockedStake,
             uint256 fromEpoch,
             uint256 endTime,
             uint256 duration,

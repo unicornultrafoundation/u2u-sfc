@@ -327,7 +327,7 @@ contract('SFC', async ([firstValidator,,,, thirdDelegator, account1, account2, a
             await sealEpoch(this.sfc, (new BN(60 * 60 * 24)).toString());
 
             let ld = await this.sfc.getDelegatorLockStake(thirdDelegator, testValidator3ID, 1);
-            expect(ld[5]).to.bignumber.equal(new BN(2));
+            expect(ld.lockStashedRewardsUntilEpoch).to.bignumber.equal(new BN(2));
 
             const firstDelegatorPendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, 1);
             const firstDelegatorBalance = new BN(await web3.eth.getBalance(thirdDelegator));
@@ -340,8 +340,36 @@ contract('SFC', async ([firstValidator,,,, thirdDelegator, account1, account2, a
             expect(firstDelegatorBalance.add(firstDelegatorPendingRewards)).to.be.bignumber.below(delegatorBalance.add(amount18('0.01')));
 
             ld = await this.sfc.getDelegatorLockStake(thirdDelegator, testValidator3ID, 1);
-            expect(ld[5]).to.bignumber.equal(await this.sfc.currentSealedEpoch());
+            expect(ld.lockStashedRewardsUntilEpoch).to.bignumber.equal(await this.sfc.currentSealedEpoch());
             expect(pendingRewards).to.bignumber.equal(BN(0));
+        });
+    });
+
+    describe('restake reward', () => {
+        it('Should increase stake after restaking Rewards', async () => {
+            await this.consts.updateBaseRewardPerSecond(new BN('1'));
+            await this.sfc.delegate(testValidator3ID, {
+                from: thirdDelegator,
+                value: amount18('10'),
+            });
+
+            await this.sfc.createLockStake(testValidator3ID, (60 * 60 * 24 * 14), amount18('1'),
+                { from: thirdDelegator });
+
+            await sealEpoch(this.sfc, (new BN(0)).toString());
+            await sealEpoch(this.sfc, (new BN(60 * 60 * 24)).toString());
+
+            const firstDelegatorPendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, 1);
+            expect(firstDelegatorPendingRewards).to.be.bignumber.equal(new BN('923'));
+            const firstDelegatorStake = await this.sfc.getStake(thirdDelegator, testValidator3ID);
+            const firstDelegatorLockupInfo = await this.sfc.getDelegatorLockStake(thirdDelegator, testValidator3ID, 1);
+
+            await this.sfc.restakeRewards(testValidator3ID, 1, { from: thirdDelegator });
+
+            const delegatorStake = await this.sfc.getStake(thirdDelegator, testValidator3ID);
+            const delegatorLockupInfo = await this.sfc.getDelegatorLockStake(thirdDelegator, testValidator3ID, 1);
+            expect(delegatorStake).to.be.bignumber.equal(firstDelegatorStake.add(firstDelegatorPendingRewards));
+            expect(delegatorLockupInfo.lockedStake).to.be.bignumber.equal(firstDelegatorLockupInfo.lockedStake.add(firstDelegatorPendingRewards));
         });
     });
 });
