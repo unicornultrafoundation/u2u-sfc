@@ -746,17 +746,11 @@ contract SFCLib is SFCBase {
         uint256 toValidatorID,
         uint256[] memory lIds
     ) public view returns (uint256) {
-        Rewards memory reward = _pendingRewards(delegator, toValidatorID);
+        uint256 reward = 0;
         for (uint256 i = 0; i < lIds.length; i++) {
-            reward = sumRewards(
-                reward,
-                _pendingRewards(delegator, toValidatorID, lIds[i])
-            );
+            reward = reward.add(pendingRewards(delegator, toValidatorID, lIds[i]));
         }
-        return
-            reward.unlockedReward.add(reward.lockupBaseReward).add(
-                reward.lockupExtraReward
-            );
+        return reward;
     }
 
     function stashRewards(

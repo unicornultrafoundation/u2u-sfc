@@ -176,13 +176,13 @@ interface SFCUnitTestIV2 {
     function pendingRewards(
         address delegator,
         uint256 toValidatorID,
-        uint256 lId
+        uint256[] calldata lId
     ) external view returns (uint256);
 
     function stashRewards(
         address delegator,
         uint256 toValidatorID,
-        uint256 idx
+        uint256[] calldata idx
     ) external;
 
     function claimRewards(uint256 toValidatorID, uint256 lId) external;

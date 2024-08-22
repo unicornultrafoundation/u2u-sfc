@@ -10,6 +10,6 @@ contract Version {
      */
     function version() public pure returns (bytes3) {
         // version 3.0.4
-        return "304";
+        return "305";
     }
 }

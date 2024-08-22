@@ -239,7 +239,7 @@ contract('SFC', async ([firstValidator,,,, thirdDelegator, account1, account2, a
             });
 
             let unlockedStake = await this.sfc.getUnlockedStake(thirdDelegator, testValidator3ID, { from: thirdDelegator });
-            let pendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, 1, { from: thirdDelegator });
+            let pendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, [1], { from: thirdDelegator });
 
             expect(unlockedStake.toString()).to.equal('10000000000000000000');
             expect(web3.utils.fromWei(pendingRewards.toString(), 'ether')).to.equal('0');
@@ -247,14 +247,14 @@ contract('SFC', async ([firstValidator,,,, thirdDelegator, account1, account2, a
                 { from: thirdDelegator });
 
             unlockedStake = await this.sfc.getUnlockedStake(thirdDelegator, testValidator3ID, { from: thirdDelegator });
-            pendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, 1, { from: thirdDelegator });
+            pendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, [1], { from: thirdDelegator });
 
             expect(unlockedStake.toString()).to.equal('9000000000000000000');
             expect(web3.utils.fromWei(pendingRewards.toString(), 'ether')).to.equal('0');
             await sealEpoch(this.sfc, (new BN(60 * 60 * 24 * 14)).toString());
 
             unlockedStake = await this.sfc.getUnlockedStake(thirdDelegator, testValidator3ID, { from: thirdDelegator });
-            pendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, 1, { from: thirdDelegator });
+            pendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, [1], { from: thirdDelegator });
             let pendingRewardsv1 = await this.sfcv1.pendingRewards(thirdDelegator, testValidator3ID, { from: thirdDelegator });
 
             expect(unlockedStake.toString()).to.equal('9000000000000000000');
@@ -263,7 +263,7 @@ contract('SFC', async ([firstValidator,,,, thirdDelegator, account1, account2, a
 
             await this.sfc.unlockStake(testValidator3ID, 1, amount18('1'), { from: thirdDelegator });
             await sealEpoch(this.sfc, (new BN(60 * 60 * 24 * 14)).toString());
-            pendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, 1, { from: thirdDelegator });
+            pendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, [1], { from: thirdDelegator });
             pendingRewardsv1 = await this.sfcv1.pendingRewards(thirdDelegator, testValidator3ID, { from: thirdDelegator });
 
             expect(web3.utils.fromWei(pendingRewards.toString(), 'ether')).to.equal('1909.394271481942710817');
@@ -272,7 +272,7 @@ contract('SFC', async ([firstValidator,,,, thirdDelegator, account1, account2, a
             unlockedStake = await this.sfc.getUnlockedStake(thirdDelegator, testValidator3ID, { from: thirdDelegator });
             expect(unlockedStake.toString()).to.equal('10000000000000000000');
 
-            await expectRevert(this.sfc.stashRewards(thirdDelegator, testValidator3ID, 1, { from: thirdDelegator }), 'nothing to stash');
+            await expectRevert(this.sfc.stashRewards(thirdDelegator, testValidator3ID, [1], { from: thirdDelegator }), 'nothing to stash');
         });
     });
 
@@ -329,11 +329,11 @@ contract('SFC', async ([firstValidator,,,, thirdDelegator, account1, account2, a
             let ld = await this.sfc.getDelegatorLockStake(thirdDelegator, testValidator3ID, 1);
             expect(ld.lockStashedRewardsUntilEpoch).to.bignumber.equal(new BN(2));
 
-            const firstDelegatorPendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, 1);
+            const firstDelegatorPendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, [1]);
             const firstDelegatorBalance = new BN(await web3.eth.getBalance(thirdDelegator));
 
             await this.sfc.claimRewards(testValidator3ID, [1], { from: thirdDelegator });
-            const pendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, 1);
+            const pendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, [1]);
             const delegatorBalance = new BN(await web3.eth.getBalance(thirdDelegator));
 
             expect(firstDelegatorBalance.add(firstDelegatorPendingRewards)).to.be.bignumber.above(delegatorBalance);
@@ -359,7 +359,7 @@ contract('SFC', async ([firstValidator,,,, thirdDelegator, account1, account2, a
             await sealEpoch(this.sfc, (new BN(0)).toString());
             await sealEpoch(this.sfc, (new BN(60 * 60 * 24)).toString());
 
-            const firstDelegatorPendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, 1);
+            const firstDelegatorPendingRewards = await this.sfc.pendingRewards(thirdDelegator, testValidator3ID, [1]);
             expect(firstDelegatorPendingRewards).to.be.bignumber.equal(new BN('923'));
             const firstDelegatorStake = await this.sfc.getStake(thirdDelegator, testValidator3ID);
             const firstDelegatorLockupInfo = await this.sfc.getDelegatorLockStake(thirdDelegator, testValidator3ID, 1);
