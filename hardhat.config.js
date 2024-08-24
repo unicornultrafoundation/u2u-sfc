@@ -1,5 +1,6 @@
 require('@nomicfoundation/hardhat-toolbox');
 require('@nomiclabs/hardhat-truffle5');
+require('hardhat-contract-sizer');
 require('dotenv').config();
 
 const { PRIVATE_KEY } = process.env;

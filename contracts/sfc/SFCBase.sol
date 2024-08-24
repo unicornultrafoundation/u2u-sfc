@@ -131,7 +131,7 @@ contract SFCBase is SFCState {
         if (!isLockedUp(delegator, toValidatorID, lId)) {
             return 0;
         }
-        return getLockupInfo[delegator][toValidatorID].lockedStake;
+        return getLockupInfoV2[delegator][toValidatorID][lId].lockedStake;
     }
 
     function isLockedUp(address delegator, uint256 toValidatorID) view public returns (bool) {

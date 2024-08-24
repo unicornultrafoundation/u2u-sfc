@@ -176,16 +176,15 @@ interface SFCUnitTestIV2 {
     function pendingRewards(
         address delegator,
         uint256 toValidatorID,
-        uint256[] calldata lId
+        uint256 lId
     ) external view returns (uint256);
 
     function stashRewards(
         address delegator,
         uint256 toValidatorID,
-        uint256[] calldata idx
+        uint256 id
     ) external;
 
-    function claimRewards(uint256 toValidatorID, uint256 lId) external;
     function restakeRewards(uint256 toValidatorID, uint256 lId) external;
 
     function offlinePenaltyThreshold()
@@ -319,7 +318,7 @@ interface SFCUnitTestIV2 {
         uint256 amount
     ) external returns (uint256);
 
-    function getDelegatorLockStake(
+    function getLockupInfoV2(
         address delAddr,
         uint256 valIdx,
         uint256 lId
@@ -337,5 +336,5 @@ interface SFCUnitTestIV2 {
         );
 
     function setEnabledAutoRelock(uint256 valId, bool enabled) external;
-    function claimRewards(uint256 toValidatorID, uint256[] calldata lIds) external;
+    function claimRewards(uint256 toValidatorID, uint256 lId) external;
 }

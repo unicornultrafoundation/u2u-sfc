@@ -27,7 +27,7 @@ contract NetworkInitializer {
         consts.updateBaseRewardPerSecond(3802651753849535500);
         consts.updateOfflinePenaltyThresholdTime(5 days);
         consts.updateOfflinePenaltyThresholdBlocksNum(1000);
-        consts.updateTargetGasPowerPerSecond(2000000);
+        consts.updateTargetGasPowerPerSecond(500000000);
         consts.updateGasPriceBalancingCounterweight(3600);
         consts.transferOwnership(_owner);
 

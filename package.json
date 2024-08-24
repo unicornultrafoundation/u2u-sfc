@@ -46,10 +46,11 @@
   "author": "Uniultra Foundation",
   "license": "MIT",
   "dependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "@nomiclabs/hardhat-truffle5": "^2.0.7",
     "@nomiclabs/hardhat-web3": "^2.0.0",
-    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "dotenv": "^16.0.3",
-    "npm": "^7.6.3"
+    "npm": "^7.6.3",
+    "hardhat-contract-sizer": "^2.10.0"
   }
 }
