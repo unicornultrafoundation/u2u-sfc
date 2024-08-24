@@ -1251,12 +1251,18 @@ contract SFCLib is SFCBase {
             getLockupInfoV2[delAddr][validatorId][lId].lockedStake > 0,
             "not locked up"
         );
+        require(
+            duration >= getLockupInfoV2[delAddr][validatorId][lId].duration,
+            "lockup duration cannot decrease"
+        );
 
         uint256 endTime = _now().add(duration);
         _relockWhenDelegatorLock(validatorId, endTime);
         _stashRewards(delAddr, validatorId, lId);
 
         getLockupInfoV2[delAddr][validatorId][lId].lockedStake += amount;
+        getLockupInfoV2[delAddr][validatorId][lId].duration = duration;
+        getLockupInfoV2[delAddr][validatorId][lId].endTime = endTime;
         totalLockupBalance[delAddr][validatorId] += amount;
 
         emit LockedUpStake(delAddr, validatorId, lId, duration, amount);

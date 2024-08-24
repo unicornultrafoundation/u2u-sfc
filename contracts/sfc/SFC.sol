@@ -37,6 +37,7 @@ contract SFC is SFCBase, Version {
 
     event UpdatedBaseRewardPerSec(uint256 value);
     event UpdatedOfflinePenaltyThreshold(uint256 blocksNum, uint256 period);
+    event SealedEpoch(uint256 epoch);
 
     /*
     Constructor
@@ -212,6 +213,8 @@ contract SFC is SFCBase, Version {
         snapshot.endTime = _now();
         snapshot.baseRewardPerSecond = c.baseRewardPerSecond();
         snapshot.totalSupply = totalSupply;
+
+        emit SealedEpoch(currentSealedEpoch);
     }
 
     function sealEpochValidators(uint256[] calldata nextValidatorIDs) external onlyDriver {
