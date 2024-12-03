@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0.0;
+pragma solidity ^0.5.0;
 
 import "../sfc/NodeDriver.sol";
 
@@ -7,7 +7,7 @@ contract StubEvmWriter is EVMWriter {
 
     function copyCode(address acc, address from) external {}
 
-    function swapCode(address acc, address with) external {}
+    function swapCode(address acc, address withAcc) external {}
 
     function setStorage(address acc, bytes32 key, bytes32 value) external {}
 

@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0.0;
+pragma solidity ^0.5.0;
 import "../sfc/ConstantsManager.sol";
 
 contract UnitTestConstantsManager is ConstantsManager {
