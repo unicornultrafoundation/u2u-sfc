@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0.0;
+pragma solidity ^0.5.0;
 
 import "../common/Decimal.sol";
 import "./GasPriceConstants.sol";
@@ -394,14 +394,6 @@ contract SFCLib is SFCBase {
         _delegate(delegator, toValidatorID, lockupReward.add(rewards.unlockedReward));
         getLockupInfo[delegator][toValidatorID].lockedStake += lockupReward;
         emit RestakedRewards(delegator, toValidatorID, rewards.lockupExtraReward, rewards.lockupBaseReward, rewards.unlockedReward);
-    }
-
-    // mintU2U allows SFC owner to mint an arbitrary amount of U2U tokens
-    // justification is a human readable description of why tokens were minted (e.g. because ERC20 U2U tokens were burnt)
-    function mintU2U(address payable receiver, uint256 amount, string calldata justification) onlyOwner external {
-        _mintNativeToken(amount);
-        receiver.transfer(amount);
-        emit InflatedU2U(receiver, amount, justification);
     }
 
     // burnU2U allows SFC to burn an arbitrary amount of U2U tokens

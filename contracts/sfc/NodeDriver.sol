@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0.0;
+pragma solidity ^0.5.0;
 
 import "@openzeppelin/contracts/math/SafeMath.sol";
 import "../common/Initializable.sol";
@@ -212,8 +212,8 @@ contract NodeDriver is Initializable {
         evmWriter.copyCode(acc, from);
     }
 
-    function swapCode(address acc, address with) external onlyBackend {
-        evmWriter.swapCode(acc, with);
+    function swapCode(address acc, address withAddr) external onlyBackend {
+        evmWriter.swapCode(acc, withAddr);
     }
 
     function setStorage(address acc, bytes32 key, bytes32 value) external onlyBackend {
@@ -281,7 +281,7 @@ interface EVMWriter {
 
     function copyCode(address acc, address from) external;
 
-    function swapCode(address acc, address with) external;
+    function swapCode(address acc, address withAddr) external;
 
     function setStorage(address acc, bytes32 key, bytes32 value) external;
 
