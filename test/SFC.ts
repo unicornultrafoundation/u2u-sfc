@@ -5,7 +5,7 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { beforeEach } from 'mocha';
 
-import { SFCUnitTestI, NodeDriverAuth, NodeDriver, UnitTestConstantsManager } from '../typechain-types'
+import { SFCUnitTestI, NodeDriverAuth, NodeDriver, UnitTestConstantsManager, sfc } from '../typechain-types'
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { BlockchainNode } from "./helpers/blockchain";
 
@@ -957,7 +957,7 @@ describe('Methods tests', async () => {
     });
 })
 
-describe("Staking / Sealed Epoch functions", () => {
+describe("Staking / Sealed", () => {
     let that: That & {
         firstValidator: HardhatEthersSigner,
         secondValidator: HardhatEthersSigner,
@@ -966,6 +966,8 @@ describe("Staking / Sealed Epoch functions", () => {
         secondDelegator: HardhatEthersSigner,
         thirdDelegator: HardhatEthersSigner,
         node: BlockchainNode,
+        firstValidatorID: bigint,
+        secondValidatorID: bigint,
     }
     const fixture = async () => {
         const [firstValidator, secondValidator, thirdValidator, firstDelegator, secondDelegator, thirdDelegator] = await ethers.getSigners();
@@ -984,22 +986,25 @@ describe("Staking / Sealed Epoch functions", () => {
         await sfc.rebaseTime();
         await sfc.enableNonNodeCalls();
 
+        const node = new BlockchainNode(sfc);
+
+
         // Create first validator
-        await sfc.connect(firstValidator).createValidator(pubkey, {
+        await node.handleTx(await sfc.connect(firstValidator).createValidator(pubkey, {
             value: ethers.parseEther('0.4'),
-        });
+        }));
         const firstValidatorID = await sfc.getValidatorID(firstValidator.address);
         
         // Create second validator
-        await sfc.connect(secondValidator).createValidator(pubkey, {
+        await node.handleTx(await sfc.connect(secondValidator).createValidator(pubkey, {
             value: ethers.parseEther('0.8'),
-        });
+        }));
         const secondValidatorID = await sfc.getValidatorID(secondValidator.address);
         
         // Create third validator
-        await sfc.connect(thirdValidator).createValidator(pubkey, {
+        await node.handleTx(await sfc.connect(thirdValidator).createValidator(pubkey, {
             value: ethers.parseEther('0.8'),
-        });
+        }));
         const thirdValidatorID = await sfc.getValidatorID(thirdValidator.address);
         
         // Delegate stakes
@@ -1018,9 +1023,7 @@ describe("Staking / Sealed Epoch functions", () => {
         // Seal the epoch
         
         // Initialize BlockchainNode
-        const node = new BlockchainNode(sfc);
         await node.sealEpoch(0);
-
 
         return {
             owner: firstValidator,
@@ -1038,6 +1041,8 @@ describe("Staking / Sealed Epoch functions", () => {
             firstDelegator,
             secondDelegator,
             thirdDelegator,
+            firstValidatorID,
+            secondValidatorID
         };
     }
 
@@ -1045,4 +1050,81 @@ describe("Staking / Sealed Epoch functions", () => {
         that = await loadFixture(fixture);
     })
 
+    describe('Staking / Sealed Epoch functions', () => {
+        it('Should return claimed Rewards until Epoch', async () => {
+            await that.constants.updateBaseRewardPerSecond(1);
+            await that.node.sealEpoch(60 * 60 * 24);
+            await that.node.sealEpoch(60 * 60 * 24);
+    
+            expect(await that.sfc.stashedRewardsUntilEpoch(that.firstDelegator.address, 1)).to.equal(0);
+            await that.sfc.connect(that.firstDelegator).claimRewards(1);
+            expect(await that.sfc.stashedRewardsUntilEpoch(that.firstDelegator.address, 1)).to.equal(await that.sfc.currentSealedEpoch());
+        });
+    
+        it('Check pending Rewards of delegators', async () => {
+            await that.constants.updateBaseRewardPerSecond(1);
+    
+            expect((await that.sfc.pendingRewards(that.firstValidator.address, that.firstValidatorID)).toString()).to.equal('0');
+            expect((await that.sfc.pendingRewards(that.firstDelegator.address, that.firstValidatorID)).toString()).to.equal('0');
+    
+            await that.node.sealEpoch(60 * 60 * 24);
+    
+            expect((await that.sfc.pendingRewards(that.firstValidator.address, that.firstValidatorID)).toString()).to.equal('6966');
+            expect((await that.sfc.pendingRewards(that.firstDelegator.address, that.firstValidatorID)).toString()).to.equal('2754');
+        });
+    
+        it('Check if pending Rewards have been increased after sealing Epoch', async () => {
+            await that.constants.updateBaseRewardPerSecond(1);
+    
+            await that.node.sealEpoch(60 * 60 * 24);
+            expect((await that.sfc.pendingRewards(that.firstValidator.address, that.firstValidatorID)).toString()).to.equal('6966');
+            expect((await that.sfc.pendingRewards(that.firstDelegator.address, that.firstValidatorID)).toString()).to.equal('2754');
+    
+            await that.node.sealEpoch(60 * 60 * 24);
+            expect((await that.sfc.pendingRewards(that.firstValidator.address, that.firstValidatorID)).toString()).to.equal('13932');
+            expect((await that.sfc.pendingRewards(that.firstDelegator.address, that.firstValidatorID)).toString()).to.equal('5508');
+        });
+    
+        it('Should increase balances after claiming Rewards', async () => {
+            await that.constants.updateBaseRewardPerSecond(100000000000000n);
+    
+            await that.node.sealEpoch(0);
+            await that.node.sealEpoch(60 * 60 * 24);
+    
+            const firstDelegatorPendingRewards = await that.sfc.pendingRewards(that.firstDelegator.address, that.firstValidatorID);
+            expect(firstDelegatorPendingRewards).to.equal(ethers.parseEther('0.2754'));
+            const firstDelegatorBalance = await ethers.provider.getBalance(that.firstDelegator.address);
+    
+            await that.sfc.connect(that.firstDelegator).claimRewards(1);
+    
+            const newDelegatorBalance = await ethers.provider.getBalance(that.firstDelegator.address);
+            expect(newDelegatorBalance- firstDelegatorBalance).to.be.closeTo(
+                firstDelegatorPendingRewards.toString(),
+                ethers.parseEther('0.01').toString()
+            );
+        });
+    
+        it('Should increase locked stake after restaking Rewards', async () => {
+            await that.sfc.connect(that.firstValidator).lockStake(that.firstValidatorID, 86400 * 219 + 10, ethers.parseEther('0.2'));
+            await that.sfc.connect(that.firstDelegator).lockStake(that.firstValidatorID, 86400 * 219, ethers.parseEther('0.2'));
+    
+            await that.constants.updateBaseRewardPerSecond(1);
+    
+            await that.node.sealEpoch(0);
+            await that.node.sealEpoch(60 * 60 * 24);
+    
+            const firstDelegatorPendingRewards = await that.sfc.pendingRewards(that.firstDelegator.address, that.firstValidatorID);
+            expect(firstDelegatorPendingRewards).to.equal('4681');
+            const firstDelegatorPendingLockupRewards = 3304n;
+            const firstDelegatorLockupInfo = await that.sfc.getLockupInfo(that.firstDelegator.address, that.firstValidatorID);
+    
+            await that.sfc.connect(that.firstDelegator).restakeRewards(that.firstValidatorID);
+    
+            const updatedLockupInfo = await that.sfc.getLockupInfo(that.firstDelegator.address, that.firstValidatorID);
+            console.log(updatedLockupInfo)
+            expect(updatedLockupInfo.lockedStake).to.equal(
+                firstDelegatorLockupInfo.lockedStake + firstDelegatorPendingLockupRewards
+            );
+        });
+    });
 })
