@@ -7,7 +7,8 @@ import { beforeEach } from 'mocha';
 
 import { SFCUnitTestI, NodeDriverAuth, NodeDriver, UnitTestConstantsManager, sfc } from '../typechain-types'
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
-import { BlockchainNode } from "./helpers/blockchain";
+import { BlockchainNode, ValidatorMetrics } from "./helpers/blockchain";
+import { BigNumberish } from "ethers";
 
 const pubkey = '0x00a2941866e485442aa6b17d67d77f8a6c4580bb556894cc1618473eff1e18203d8cce50b563cf4c75e408886079b8f067069442ed52e2ac9e556baa3f8fcc525f';
 
@@ -1121,10 +1122,970 @@ describe("Staking / Sealed", () => {
             await that.sfc.connect(that.firstDelegator).restakeRewards(that.firstValidatorID);
     
             const updatedLockupInfo = await that.sfc.getLockupInfo(that.firstDelegator.address, that.firstValidatorID);
-            console.log(updatedLockupInfo)
             expect(updatedLockupInfo.lockedStake).to.equal(
                 firstDelegatorLockupInfo.lockedStake + firstDelegatorPendingLockupRewards
             );
         });
+
+        it('Should return stashed Rewards', async () => {
+            await that.constants.updateBaseRewardPerSecond(1);
+    
+            await that.node.sealEpoch(0);
+            await that.node.sealEpoch(60 * 60 * 24);
+    
+            expect((await that.sfc.rewardsStash(that.firstDelegator.address, 1)).toString()).to.equal('0');
+    
+            await that.sfc.connect(that.firstDelegator).stashRewards(that.firstDelegator.address, 1);
+            expect((await that.sfc.rewardsStash(that.firstDelegator.address, 1)).toString()).to.equal('2754');
+        });
+    
+        it('Should update the validator on node', async () => {
+            await that.constants.updateOfflinePenaltyThresholdTime(10000);
+            await that.constants.updateOfflinePenaltyThresholdBlocksNum(500);
+    
+            expect(await that.constants.offlinePenaltyThresholdTime()).to.equal(10000);
+            expect(await that.constants.offlinePenaltyThresholdBlocksNum()).to.equal(500);
+        });
+    
+        it('Should not be able to deactivate validator if not Node', async () => {
+            await that.sfc.disableNonNodeCalls();
+            await expect(that.sfc.connect(that.user).deactivateValidator(1, 0)).to.be.rejectedWith(
+                'caller is not the NodeDriverAuth contract'
+            );
+        });
+    
+        it('Should seal Epochs', async () => {
+            let validatorsMetrics: Map<number, ValidatorMetrics> | undefined;
+            const validatorIDs = await that.sfc.lastValidatorID();
+    
+            if (validatorsMetrics === undefined) {
+                validatorsMetrics = new Map<number, ValidatorMetrics>()
+                for (let i = 0; i < validatorIDs; i++) {
+                    let m = new ValidatorMetrics(0, 0, 24 * 60 * 60, ethers.parseEther('100'));
+                    validatorsMetrics.set(i, m)
+                }
+            }
+    
+            const allValidators = [];
+            const offlineTimes: BigNumberish[] = [];
+            const offlineBlocks: BigNumberish[] = [];
+            const uptimes: BigNumberish[] = [];
+            const originatedTxsFees: BigNumberish[] = [];
+            for (let i = 0; i < validatorIDs; i++) {     
+                const metrics =  validatorsMetrics.get(i) 
+                if (metrics) {
+                    allValidators.push(i + 1);
+                    offlineTimes.push(metrics.offlineTime);
+                    offlineBlocks.push(metrics.offlineBlocks);
+                    uptimes.push(metrics.uptime);
+                    originatedTxsFees.push(metrics.originatedTxsFee);
+                }
+            }
+    
+            await expect(that.sfc.advanceTime(24 * 60 * 60)).to.be.fulfilled;
+            await expect(that.sfc.sealEpoch(offlineTimes, offlineBlocks, uptimes, originatedTxsFees, 0)).to.be.fulfilled;
+            await expect(that.sfc.sealEpochValidators(allValidators)).to.be.fulfilled;
+        });
+    
+        it('Should seal Epoch on Validators', async () => {
+            let validatorsMetrics: Map<number, ValidatorMetrics> | undefined;
+            const validatorIDs = await that.sfc.lastValidatorID();
+    
+            if (validatorsMetrics === undefined) {
+                validatorsMetrics = new Map<number, ValidatorMetrics>()
+                for (let i = 0; i < validatorIDs; i++) {
+                    let m = new ValidatorMetrics(0, 0, 24 * 60 * 60, ethers.parseEther('0'));
+                    validatorsMetrics.set(i, m)
+                }
+            }
+    
+            const allValidators = [];
+            const offlineTimes: BigNumberish[] = [];
+            const offlineBlocks: BigNumberish[] = [];
+            const uptimes: BigNumberish[] = [];
+            const originatedTxsFees: BigNumberish[] = [];
+            for (let i = 0; i < validatorIDs; i++) {     
+                const metrics =  validatorsMetrics.get(i) 
+                if (metrics) {
+                    allValidators.push(i + 1);
+                    offlineTimes.push(metrics.offlineTime);
+                    offlineBlocks.push(metrics.offlineBlocks);
+                    uptimes.push(metrics.uptime);
+                    originatedTxsFees.push(metrics.originatedTxsFee);
+                }
+            }
+    
+            await expect(that.sfc.advanceTime(24 * 60 * 60)).to.be.fulfilled;
+            await expect(that.sfc.sealEpoch(offlineTimes, offlineBlocks, uptimes, originatedTxsFees, 0)).to.be.fulfilled;
+            await expect(that.sfc.sealEpochValidators(allValidators)).to.be.fulfilled;
+        });
     });
+
+    describe('Stake lockup', () => {
+        beforeEach('lock stakes', async () => {
+            // Lock 75% of stake for 60% of a maximum lockup period
+            await that.sfc.connect(that.firstValidator).lockStake(
+                that.firstValidatorID,
+                86400 * 219,
+                ethers.parseEther('0.6')
+            );
+    
+            // Lock 25% of stake for 20% of a maximum lockup period
+            await that.sfc.connect(that.firstDelegator).lockStake(
+                that.firstValidatorID,
+                86400 * 73,
+                ethers.parseEther('0.1')
+            );
+        });
+    
+        it('Check pending Rewards of delegators', async () => {
+            await that.constants.updateBaseRewardPerSecond(1);
+    
+            expect((await that.sfc.pendingRewards(that.firstValidator.address, that.firstValidatorID)).toString()).to.equal('0');
+            expect((await that.sfc.pendingRewards(that.firstDelegator.address, that.firstValidatorID)).toString()).to.equal('0');
+    
+            await that.node.sealEpoch(60 * 60 * 24);
+    
+            expect((await that.sfc.pendingRewards(that.firstValidator.address, that.firstValidatorID)).toString()).to.equal('14279');
+            expect((await that.sfc.pendingRewards(that.firstDelegator.address, that.firstValidatorID)).toString()).to.equal('3074');
+        });
+    
+        it('Check if pending Rewards have been increased after sealing Epoch', async () => {
+            await that.constants.updateBaseRewardPerSecond(1);
+    
+            await that.node.sealEpoch(60 * 60 * 24);
+            expect((await that.sfc.pendingRewards(that.firstValidator.address, that.firstValidatorID)).toString()).to.equal('14279');
+            expect((await that.sfc.pendingRewards(that.firstDelegator.address, that.firstValidatorID)).toString()).to.equal('3074');
+    
+            await that.node.sealEpoch(60 * 60 * 24);
+            expect((await that.sfc.pendingRewards(that.firstValidator.address, that.firstValidatorID)).toString()).to.equal('28558');
+            expect((await that.sfc.pendingRewards(that.firstDelegator.address, that.firstValidatorID)).toString()).to.equal('6150');
+        });
+    
+        it('Should increase balances after claiming Rewards', async () => {
+            await that.constants.updateBaseRewardPerSecond(100_000_000_000_000);
+    
+            await that.node.sealEpoch(0);
+            await that.node.sealEpoch(60 * 60 * 24);
+    
+            const firstDelegatorPendingRewards = await that.sfc.pendingRewards(that.firstDelegator.address, that.firstValidatorID);
+            const firstDelegatorBalance = await ethers.provider.getBalance(that.firstDelegator.address);
+    
+           await that.sfc.connect(that.firstDelegator).claimRewards(that.firstValidatorID);
+    
+            const newDelegatorBalance = await ethers.provider.getBalance(that.firstDelegator.address);
+            expect(firstDelegatorBalance + firstDelegatorPendingRewards).to.above(newDelegatorBalance);
+        });
+    
+        it('Should return stashed Rewards', async () => {
+            await that.constants.updateBaseRewardPerSecond(1);
+    
+            await that.node.sealEpoch(0);
+            await that.node.sealEpoch(60 * 60 * 24);
+    
+            expect((await that.sfc.rewardsStash(that.firstDelegator.address, that.firstValidatorID)).toString()).to.equal('0');
+    
+            await that.sfc.connect(that.firstDelegator).stashRewards(that.firstDelegator.address,that.firstValidatorID);
+            expect((await that.sfc.rewardsStash(that.firstDelegator.address, that.firstValidatorID)).toString()).to.equal('3074');
+        });
+    
+        it('Should return pending rewards after unlocking and re-locking', async () => {
+            await that.constants.updateBaseRewardPerSecond(1);
+        
+            for (let i = 0; i < 2; i++) {
+                const epoch = await that.sfc.currentSealedEpoch();
+        
+                // delegator 1 is still locked
+                // delegator 1 should receive more rewards than delegator 2
+                // validator 1 should receive more rewards than validator 2
+                await that.node.sealEpoch(86400 * 73);
+        
+                // Check pending rewards
+                expect(await that.node.sfc.pendingRewards(that.firstDelegator.address, 1)).to.eq(224496n);
+                expect(await that.node.sfc.pendingRewards(that.secondDelegator.address, 2)).to.eq(201042n);
+                expect(await that.node.sfc.pendingRewards(that.firstValidator.address, 1)).to.eq(1042461n);
+                expect(await that.node.sfc.pendingRewards(that.secondValidator.address, 2)).to.eq(508518n);
+        
+                // Check highest lockup epoch
+                expect(await that.node.sfc.highestLockupEpoch(that.firstDelegator.address, 1)).to.eq(epoch + 1n);
+                expect(await that.node.sfc.highestLockupEpoch(that.secondDelegator.address, 2)).to.eq(0n);
+                expect(await that.node.sfc.highestLockupEpoch(that.firstValidator.address, 1)).to.eq(epoch + 1n);
+                expect(await that.node.sfc.highestLockupEpoch(that.secondValidator.address, 2)).to.eq(0);
+        
+                // delegator 1 isn't locked already
+                // delegator 1 should receive the same reward as delegator 2
+                // validator 1 should receive more rewards than validator 2
+                await that.node.sealEpoch(86400 * 1);
+        
+                expect(await that.node.sfc.pendingRewards(that.firstDelegator.address, 1)).to.eq(224496 + 2754);
+                expect(await that.node.sfc.pendingRewards(that.secondDelegator.address, 2)).to.eq(201042 + 2754);
+                expect(await that.node.sfc.pendingRewards(that.firstValidator.address, 1)).to.eq(1042461 + 14279);
+                expect(await that.node.sfc.pendingRewards(that.secondValidator.address, 2)).to.eq(508518 + 6966);
+                expect(await that.node.sfc.highestLockupEpoch(that.firstDelegator.address, 1)).to.eq(epoch + 1n);
+                expect(await that.node.sfc.highestLockupEpoch(that.firstValidator.address, 1)).to.eq(epoch  +2n);
+                
+                // validator 1 is still locked
+                // delegator 1 should receive the same reward as delegator 2
+                // validator 1 should receive more rewards than validator 2
+                await that.node.sealEpoch(86400 * 145);
+
+                // validator 1 isn't locked already
+                // delegator 1 should receive the same reward as delegator 2
+                // validator 1 should receive the same reward as validator 2
+                await that.node.sealEpoch(86400 * 1);
+
+                // Re-lock stakes
+                await that.sfc.connect(that.firstValidator).lockStake(
+                    that.firstValidatorID,
+                    86400 * 219,
+                    ethers.parseEther('0.6')
+                );
+        
+                await that.sfc.connect(that.firstDelegator).lockStake(
+                    that.firstValidatorID,
+                    86400 * 73,
+                    ethers.parseEther('0.1')
+                );
+        
+                // Ensure rewards remain unchanged after re-locking
+                expect(await that.sfc.pendingRewards(that.firstDelegator.address, 1)).to.eq(224496 + 2754 + 399330 + 2754);
+                expect(await that.sfc.pendingRewards(that.secondDelegator.address, 2)).to.eq(201042 + 2754 + 399330 + 2754);
+                expect(await that.sfc.pendingRewards(that.firstValidator.address, 1)).to.eq(1042461 + 14279 + 2070643 + 6966);
+                expect(await that.sfc.pendingRewards(that.secondValidator.address, 2)).to.eq(508518 + 6966 + 1010070 + 6966);
+        
+                // Claim rewards to reset pending rewards
+                await that.sfc.connect(that.firstDelegator).claimRewards(1);
+                await that.sfc.connect(that.secondDelegator).claimRewards(2);
+                await that.sfc.connect(that.firstValidator).claimRewards(1);
+                await that.sfc.connect(that.secondValidator).claimRewards(2);
+            }
+        });
+        
+    });
+
+    describe('NodeDriver', () => {
+        it('Should not be able to call `setGenesisValidator` if not NodeDriver', async () => {
+            await expect(
+                that.nodeDriverAuth.connect(that.user).setGenesisValidator(
+                    that.owner,
+                    1,
+                    pubkey,
+                    1 << 3,
+                    await that.sfc.currentEpoch(),
+                    Date.now(),
+                    0,
+                    0
+                )
+            ).to.be.revertedWith('caller is not the NodeDriver contract');
+        });
+    
+        it('Should not be able to call `setGenesisDelegation` if not NodeDriver', async () => {
+            await expect(
+                that.nodeDriverAuth.connect(that.user).setGenesisDelegation(
+                    that.firstDelegator.address,
+                    1,
+                    100,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    1000
+                )
+            ).to.be.revertedWith('caller is not the NodeDriver contract');
+        });
+    
+        it('Should not be able to call `deactivateValidator` if not NodeDriver', async () => {
+            await expect(
+                that.nodeDriverAuth.connect(that.user).deactivateValidator(1, 0)
+            ).to.be.revertedWith('caller is not the NodeDriver contract');
+        });
+    
+        it('Should not be able to call `deactivateValidator` with wrong status', async () => {
+            await expect(
+                that.sfc.deactivateValidator(1, 0)
+            ).to.be.revertedWith('wrong status');
+        });
+    
+        it('Should deactivate Validator', async () => {
+            await expect(
+                that.sfc.deactivateValidator(1, 1)
+            ).to.not.be.reverted;
+        });
+    
+        it('Should not be able to call `sealEpochValidators` if not NodeDriver', async () => {
+            await expect(
+                that.nodeDriverAuth.connect(that.user).sealEpochValidators([1])
+            ).to.be.revertedWith('caller is not the NodeDriver contract');
+        });
+    
+        it('Should not be able to call `sealEpoch` if not NodeDriver', async () => {
+            const validatorIDs = await that.sfc.lastValidatorID()
+
+            const offlineTimes: BigNumberish[] = Array(validatorIDs).fill(0n);
+            const offlineBlocks = Array(validatorIDs).fill(0n);
+            const uptimes = Array(validatorIDs).fill(BigInt(24 * 60 * 60));
+            const originatedTxsFees = Array(validatorIDs).fill(ethers.parseEther('0'));
+    
+            await expect(that.sfc.advanceTime(24 * 60 * 60)).to.not.be.reverted;
+    
+            await expect(
+                that.nodeDriverAuth.connect(that.user).sealEpoch(
+                    offlineTimes,
+                    offlineBlocks,
+                    uptimes,
+                    originatedTxsFees,
+                    0
+                )
+            ).to.be.revertedWith('caller is not the NodeDriver contract');
+        });
+    });
+    
+
+    describe('Epoch getters', () => {
+        let currentSealedEpoch: bigint;
+    
+        beforeEach(async () => {
+            currentSealedEpoch = await that.sfc.currentSealedEpoch();
+        });
+    
+        it('should return Epoch validator IDs', async () => {
+            const validatorIDs = await that.sfc.getEpochValidatorIDs(currentSealedEpoch);
+            console.log('Validator IDs:', validatorIDs);
+            expect(validatorIDs).to.be.an('array'); // Adjust based on return type
+        });
+    
+        it('should return the Epoch Received Stake', async () => {
+            const receivedStake = await that.sfc.getEpochReceivedStake(currentSealedEpoch, 1);
+            console.log('Received Stake:', receivedStake.toString());
+            expect(receivedStake).to.be.a('bigint');
+        });
+    
+        it('should return the Epoch Accumulated Reward Per Token', async () => {
+            const accumulatedRewardPerToken = await that.sfc.getEpochAccumulatedRewardPerToken(currentSealedEpoch, 1);
+            console.log('Accumulated Reward Per Token:', accumulatedRewardPerToken.toString());
+            expect(accumulatedRewardPerToken).to.be.a('bigint');
+        });
+    
+        it('should return the Epoch Accumulated Uptime', async () => {
+            const accumulatedUptime = await that.sfc.getEpochAccumulatedUptime(currentSealedEpoch, 1);
+            console.log('Accumulated Uptime:', accumulatedUptime.toString());
+            expect(accumulatedUptime).to.be.a('bigint');
+        });
+    
+        it('should return the Epoch Accumulated Originated Txs Fee', async () => {
+            const accumulatedTxsFee = await that.sfc.getEpochAccumulatedOriginatedTxsFee(currentSealedEpoch, 1);
+            console.log('Accumulated Originated Txs Fee:', accumulatedTxsFee.toString());
+            expect(accumulatedTxsFee).to.be.a('bigint');
+        });
+    
+        it('should return the Epoch Offline Time', async () => {
+            const offlineTime = await that.sfc.getEpochOfflineTime(currentSealedEpoch, 1);
+            console.log('Offline Time:', offlineTime.toString());
+            expect(offlineTime).to.be.a('bigint');
+        });
+    
+        it('should return Epoch Offline Blocks', async () => {
+            const offlineBlocks = await that.sfc.getEpochOfflineBlocks(currentSealedEpoch, 1);
+            console.log('Offline Blocks:', offlineBlocks.toString());
+            expect(offlineBlocks).to.be.a('bigint');
+        });
+    });
+    
+    describe('Unlock features', () => {
+        it('should fail if trying to unlock stake when not locked', async () => {
+            await expect(
+                that.sfc.unlockStake(1, 10)
+            ).to.be.rejectedWith('not locked up');
+        });
+    
+        it('should fail if trying to unlock stake with amount 0', async () => {
+            await expect(
+                that.sfc.unlockStake(1, 0)
+            ).to.be.rejectedWith('zero amount');
+        });
+    
+        it('should return whether the validator is slashed', async () => {
+            const isSlashed = await that.sfc.isSlashed(1);
+            console.log('Is Validator Slashed:', isSlashed);
+            expect(isSlashed).to.be.a('boolean');
+        });
+    
+        it('should fail if delegating to a non-existing validator', async () => {
+            await expect(
+                that.sfc.delegate(4)
+            ).to.be.rejectedWith("validator doesn't exist");
+        });
+    
+        it('should fail if delegating to a non-existing validator with value', async () => {
+            await expect(
+                that.sfc.delegate(4, { value: ethers.parseEther('0.01') })
+            ).to.be.rejectedWith("validator doesn't exist");
+        });
+    });
+    
+    describe('SFC Rewards getters / Features', () => {
+        it('should return stashed rewards', async () => {
+            const rewardsStash = await that.sfc.rewardsStash(that.firstDelegator, 1);
+            console.log('Rewards Stash:', rewardsStash.toString());
+            expect(rewardsStash).to.be.a('bigint');
+        });
+    
+        it('should return locked stake for Validator 1', async () => {
+            const lockedStake = await that.sfc.getLockedStake(that.firstDelegator, 1);
+            console.log('Locked Stake for Validator 1:', lockedStake.toString());
+            expect(lockedStake).to.be.a('bigint');
+        });
+    
+        it('should return locked stake for Validator 2', async () => {
+            const lockedStake = await that.sfc.getLockedStake(that.firstDelegator, 2);
+            console.log('Locked Stake for Validator 2:', lockedStake.toString());
+            expect(lockedStake).to.be.a('bigint');
+        });
+    });
+    
+})
+
+describe('Staking / Sealed Epoch functions', () => {
+    let that: That & {
+        firstValidator: HardhatEthersSigner,
+        secondValidator: HardhatEthersSigner,
+        thirdValidator: HardhatEthersSigner,
+        firstDelegator: HardhatEthersSigner,
+        secondDelegator: HardhatEthersSigner,
+        thirdDelegator: HardhatEthersSigner,
+        node: BlockchainNode,
+        firstValidatorID: bigint,
+    }
+    const fixture = async () => {
+        const [firstValidator, secondValidator, thirdValidator, firstDelegator, secondDelegator, thirdDelegator] = await ethers.getSigners();
+        const sfc = await ethers.getContractAt("SFCUnitTestI", await ethers.deployContract('UnitTestSFC'));
+        const nodeDriver = await ethers.deployContract('NodeDriver')
+        const nodeDriverAuth = await ethers.deployContract('NodeDriverAuth')
+        const lib = await ethers.deployContract('UnitTestSFCLib');
+        const evmWriter = await ethers.deployContract('StubEvmWriter');
+        const initializer = await ethers.deployContract('UnitTestNetworkInitializer');
+
+        await initializer.initializeAll(0, 0, sfc, lib, nodeDriverAuth, nodeDriver, evmWriter, firstValidator);
+        const constants = await ethers.getContractAt(
+            'UnitTestConstantsManager',
+            await sfc.constsAddress(),
+        );
+        await sfc.rebaseTime();
+        await sfc.enableNonNodeCalls();
+
+        await sfc.setGenesisValidator(firstValidator, 1, pubkey, 0, await sfc.currentEpoch(), Date.now(), 0, 0);
+        const firstValidatorID = await sfc.getValidatorID(firstValidator);
+        await sfc.delegate(firstValidatorID, {
+            from: firstValidator,
+            value: ethers.parseEther("4"),
+        });
+
+        const node = new BlockchainNode(sfc);
+
+        await node.sealEpoch(24 * 60 * 60);
+
+        return {
+            owner: firstValidator,
+            user: secondValidator,
+            firstValidator,
+            secondValidator,
+            thirdValidator,
+            sfc,
+            evmWriter,
+            nodeDriver,
+            nodeDriverAuth,
+            constants,
+            lib,
+            node,
+            firstDelegator,
+            secondDelegator,
+            thirdDelegator,
+            firstValidatorID,
+        };
+    }
+
+    beforeEach(async function () {
+        that = await loadFixture(fixture);
+    })
+
+    it('Should set Genesis Delegation for a Validator', async () => {
+        // Set Genesis Delegation
+        await expect(
+            that.sfc.setGenesisDelegation(
+                that.firstDelegator, // Delegator address
+                that.firstValidatorID, // Validator ID
+                ethers.parseEther("1"), // Stake amount
+                0, 0, 0, 0, 0, // Lockup details (unused here)
+                100 // Rewards
+            )
+        ).to.be.fulfilled;
+
+        // Validate the stake amount for the delegator
+        const stake = await that.sfc.getStake(that.firstDelegator, that.firstValidatorID);
+        expect(stake).to.equal(ethers.parseEther("1"));
+    });
+   
+});
+
+describe('Test Rewards Calculation', () => {
+    let that: That & {
+        firstValidator: HardhatEthersSigner,
+        secondValidator: HardhatEthersSigner,
+        thirdValidator: HardhatEthersSigner,
+        firstDelegator: HardhatEthersSigner,
+        secondDelegator: HardhatEthersSigner,
+        thirdDelegator: HardhatEthersSigner,
+        node: BlockchainNode,
+        testValidator1ID: bigint,
+        testValidator2ID: bigint,
+        testValidator3ID: bigint
+    }
+    const fixture = async () => {
+        const [firstValidator, secondValidator, thirdValidator, firstDelegator, secondDelegator, thirdDelegator] = await ethers.getSigners();
+        const sfc = await ethers.getContractAt("SFCUnitTestI", await ethers.deployContract('UnitTestSFC'));
+        const nodeDriver = await ethers.deployContract('NodeDriver')
+        const nodeDriverAuth = await ethers.deployContract('NodeDriverAuth')
+        const lib = await ethers.deployContract('UnitTestSFCLib');
+        const evmWriter = await ethers.deployContract('StubEvmWriter');
+        const initializer = await ethers.deployContract('UnitTestNetworkInitializer');
+
+        await initializer.initializeAll(0, 0, sfc, lib, nodeDriverAuth, nodeDriver, evmWriter, firstValidator);
+        const constants = await ethers.getContractAt(
+            'UnitTestConstantsManager',
+            await sfc.constsAddress(),
+        );
+        await sfc.rebaseTime();
+        await sfc.enableNonNodeCalls();
+
+        await constants.updateBaseRewardPerSecond(ethers.parseEther("1"));
+
+        const node = new BlockchainNode(sfc);
+
+
+        await node.handleTx(await sfc.connect(firstValidator).createValidator(pubkey, {
+            value: ethers.parseEther("10"),
+        }));
+
+        await node.handleTx(await sfc.connect(secondValidator).createValidator(pubkey, {
+            value:ethers.parseEther("5"),
+        }));
+
+        await node.handleTx(await sfc.connect(thirdValidator).createValidator(pubkey, {
+            value: ethers.parseEther("1"),
+        }));
+
+        const testValidator1ID = await sfc.getValidatorID(firstValidator);
+        const testValidator2ID = await sfc.getValidatorID(secondValidator);
+        const testValidator3ID = await sfc.getValidatorID(thirdValidator);
+
+        await sfc.connect(thirdValidator).lockStake(testValidator3ID, 60 * 60 * 24 * 364, ethers.parseEther("1"));
+        await node.sealEpoch(0);
+
+        return {
+            owner: firstValidator,
+            user: secondValidator,
+            firstValidator,
+            secondValidator,
+            thirdValidator,
+            sfc,
+            evmWriter,
+            nodeDriver,
+            nodeDriverAuth,
+            constants,
+            lib,
+            node,
+            firstDelegator,
+            secondDelegator,
+            thirdDelegator,
+            testValidator1ID,
+            testValidator2ID,
+            testValidator3ID
+        };
+    }
+
+    beforeEach(async function () {
+        that = await loadFixture(fixture);
+    })
+
+    it('Calculation of validators rewards should be equal to 30%', async () => {
+        await that.node.sealEpoch(1000);
+
+        const rewardAcc1 = await that.sfc.pendingRewards(that.firstValidator, that.testValidator1ID);
+        const rewardAcc2 = await that.sfc.pendingRewards(that.secondValidator, that.testValidator2ID);
+        const rewardAcc3 = await that.sfc.pendingRewards(that.thirdValidator, that.testValidator3ID);
+        const totalRewards = rewardAcc1 + rewardAcc2 + rewardAcc3;
+        expect(totalRewards).to.equal(343630136986301369811n);
+    });
+    
+    it('Should not be able withdraw if request does not exist', async () => {
+        await expect(that.sfc.withdraw(that.testValidator1ID, 0)).to.be.rejectedWith("request doesn't exist")
+    });
+
+    it('Should not be able to undelegate 0 amount', async () => {
+        await that.node.sealEpoch(1000);
+        await expect(that.sfc.undelegate(that.testValidator1ID, 0, 0)).to.be.rejectedWith("zero amount")
+    });
+
+    it('Should not be able to undelegate if not enough unlocked stake', async () => {
+        await that.node.sealEpoch(1000);
+        await expect(that.sfc.undelegate(that.testValidator2ID, 0, 10)).to.be.rejectedWith("not enough unlocked stake");
+    });
+    
+    it('Should not be able to unlock if not enough unlocked stake', async () => {
+        await that.node.sealEpoch(1000);
+        await that.sfc.connect(that.thirdDelegator).delegate(that.testValidator1ID, {value:ethers.parseEther("1") });
+    
+       await expect(that.sfc.connect( that.thirdDelegator).unlockStake(that.testValidator1ID, 10), 'not locked up');
+    });
+    
+    it('should return the unlocked stake', async () => {
+        await that.node.sealEpoch(1000);
+        await that.sfc.connect(that.thirdDelegator).delegate(that.testValidator3ID, {value: ethers.parseEther("1") });
+    
+        const unlockedStake = await that.sfc.getUnlockedStake(that.thirdDelegator, that.testValidator3ID);
+        expect(unlockedStake.toString()).to.equal(ethers.parseEther("1"));
+    });
+
+    it('should return the unlocked stake', async () => {
+        await that.node.sealEpoch(1000);
+        await that.sfc.connect(that.thirdDelegator).delegate(that.testValidator3ID, { value: ethers.parseEther('1') });
+    
+        const unlockedStake = await that.sfc.getUnlockedStake(that.thirdDelegator, that.testValidator3ID);
+        expect(unlockedStake.toString()).to.equal(ethers.parseEther("1"));
+    });
+    
+    it('Should not be able to claim Rewards if 0 rewards', async () => {
+        await that.node.sealEpoch(1000);
+        await that.sfc.connect(that.thirdDelegator).delegate(that.testValidator3ID, {value:ethers.parseEther("10") });
+    
+        await that.node.sealEpoch(100);
+        await expect(that.sfc.connect(that.thirdDelegator).claimRewards(that.testValidator1ID), 'zero rewards');
+    });
+    
+    
+})
+
+
+describe('Test Calculation Rewards with Lockup', () => {
+    let that: That & {
+        firstValidator: HardhatEthersSigner,
+        secondValidator: HardhatEthersSigner,
+        thirdValidator: HardhatEthersSigner,
+        firstDelegator: HardhatEthersSigner,
+        secondDelegator: HardhatEthersSigner,
+        thirdDelegator: HardhatEthersSigner,
+        node: BlockchainNode,
+        testValidator1ID: bigint,
+        testValidator2ID: bigint,
+        testValidator3ID: bigint
+    }
+    const fixture = async () => {
+        const [firstValidator, secondValidator, thirdValidator, firstDelegator, secondDelegator, thirdDelegator] = await ethers.getSigners();
+        const sfc = await ethers.getContractAt("SFCUnitTestI", await ethers.deployContract('UnitTestSFC'));
+        const nodeDriver = await ethers.deployContract('NodeDriver')
+        const nodeDriverAuth = await ethers.deployContract('NodeDriverAuth')
+        const lib = await ethers.deployContract('UnitTestSFCLib');
+        const evmWriter = await ethers.deployContract('StubEvmWriter');
+        const initializer = await ethers.deployContract('UnitTestNetworkInitializer');
+
+        await initializer.initializeAll(0, 0, sfc, lib, nodeDriverAuth, nodeDriver, evmWriter, firstValidator);
+        const constants = await ethers.getContractAt(
+            'UnitTestConstantsManager',
+            await sfc.constsAddress(),
+        );
+        await sfc.rebaseTime();
+        await sfc.enableNonNodeCalls();
+
+        await constants.updateBaseRewardPerSecond(ethers.parseEther("1"));
+
+        const node = new BlockchainNode(sfc);
+
+
+        await node.handleTx(await sfc.connect(firstValidator).createValidator(pubkey, {
+            value: ethers.parseEther("10"),
+        }));
+
+        await node.handleTx(await sfc.connect(secondValidator).createValidator(pubkey, {
+            value:ethers.parseEther("5"),
+        }));
+
+        await node.handleTx(await sfc.connect(thirdValidator).createValidator(pubkey, {
+            value: ethers.parseEther("1"),
+        }));
+
+        const testValidator1ID = await sfc.getValidatorID(firstValidator);
+        const testValidator2ID = await sfc.getValidatorID(secondValidator);
+        const testValidator3ID = await sfc.getValidatorID(thirdValidator);
+
+        await sfc.connect(thirdValidator).lockStake(testValidator3ID, 60 * 60 * 24 * 364, ethers.parseEther("1"));
+        await node.sealEpoch(0);
+
+        return {
+            owner: firstValidator,
+            user: secondValidator,
+            firstValidator,
+            secondValidator,
+            thirdValidator,
+            sfc,
+            evmWriter,
+            nodeDriver,
+            nodeDriverAuth,
+            constants,
+            lib,
+            node,
+            firstDelegator,
+            secondDelegator,
+            thirdDelegator,
+            testValidator1ID,
+            testValidator2ID,
+            testValidator3ID
+        };
+    }
+
+    beforeEach(async function () {
+        that = await loadFixture(fixture);
+    })
+
+    it('Should not be able to lock 0 amount', async () => {
+        await that.node.sealEpoch(1000);
+
+        await expect(
+            that.sfc.connect(that.thirdDelegator).lockStake(that.testValidator1ID, 2 * 60 * 60 * 24 * 365, ethers.parseEther('0'))
+        ).to.be.rejectedWith('zero amount');
+    });
+
+    it('Should not be able to lock more than a year', async () => {
+        await that.node.sealEpoch(1000);
+
+
+        await that.sfc.connect(that.thirdDelegator).delegate(that.testValidator3ID, {
+            value: ethers.parseEther('10'),
+        });
+
+        await expect(
+            that.sfc.connect(that.thirdDelegator).lockStake(that.testValidator3ID, 2 * 60 * 60 * 24 * 365, ethers.parseEther('1'))
+        ).to.be.rejectedWith('incorrect duration');
+    });
+
+    it('Should not be able to lock more than validator lockup period', async () => {
+        await that.node.sealEpoch(1000);
+
+
+        await that.sfc.connect(that.thirdDelegator).delegate(that.testValidator3ID, {
+            value: ethers.parseEther('10'),
+        });
+
+        await expect(
+            that.sfc.connect(that.thirdDelegator).lockStake(that.testValidator3ID, 60 * 60 * 24 * 365, ethers.parseEther('1'))
+        ).to.be.rejectedWith('validator lockup period will end earlier');
+    });
+
+    it('Should be able to lock for 1 month', async () => {
+        await that.node.sealEpoch(1000);
+
+        await that.sfc.connect(that.thirdDelegator).delegate(that.testValidator3ID, {
+            value: ethers.parseEther('10'),
+        });
+
+        await that.sfc.connect(that.thirdDelegator).lockStake(that.testValidator3ID, 60 * 60 * 24 * 14, ethers.parseEther('1'));
+
+        await that.node.sealEpoch(60 * 60 * 24 * 14);
+    });
+
+    it('Should not unlock if not locked up U2U', async () => {
+        await that.node.sealEpoch(1000);
+
+        await that.sfc.connect(that.thirdDelegator).delegate(that.testValidator3ID, {
+            value: ethers.parseEther('10'),
+        });
+
+        await that.sfc.connect(that.thirdDelegator).lockStake(that.testValidator3ID, 60 * 60 * 24 * 14, ethers.parseEther('1'));
+
+        await that.node.sealEpoch(60 * 60 * 24 * 14);
+
+        await expect(
+            that.sfc.connect(that.thirdDelegator).unlockStake(that.testValidator2ID, ethers.parseEther('10'))
+        ).to.be.rejectedWith('not locked up');
+    });
+
+    it('Should not be able to unlock more than locked stake', async () => {
+        await that.node.sealEpoch(1000);
+
+        await that.sfc.connect(that.thirdDelegator).delegate(that.testValidator3ID, {
+            value: ethers.parseEther('10'),
+        });
+
+        await that.sfc.connect(that.thirdDelegator).lockStake(that.testValidator3ID, 60 * 60 * 24 * 14, ethers.parseEther('1'));
+
+        await that.node.sealEpoch(60 * 60 * 24 * 14);
+
+        await expect(
+            that.sfc.connect(that.thirdDelegator).unlockStake(that.testValidator3ID, ethers.parseEther('10'))
+        ).to.be.rejectedWith('not enough locked stake');
+    });
+
+    it('Should scale unlocking penalty', async () => {
+        await that.node.sealEpoch(1000);
+
+        await that.sfc.connect(that.thirdDelegator).delegate(that.testValidator3ID, {
+            value: ethers.parseEther('10'),
+        });
+
+        await that.sfc.connect(that.thirdDelegator).lockStake(that.testValidator3ID, 60 * 60 * 24 * 14, ethers.parseEther('1'));
+
+        await that.node.sealEpoch(100);
+
+        expect(
+            await that.sfc.connect(that.thirdDelegator).unlockStake.staticCall(that.testValidator3ID, ethers.parseEther('1'))
+        ).to.be.eq(ethers.parseEther('0.085410180572851805'));
+
+        expect(
+            await that.sfc.connect(that.thirdDelegator).unlockStake.staticCall(that.testValidator3ID, ethers.parseEther('0.5'))
+        ).to.equal(ethers.parseEther('0.042705090286425902'));
+
+        await that.sfc.connect(that.thirdDelegator).unlockStake.staticCall(that.testValidator3ID, ethers.parseEther('0.5'));
+
+        await expect(
+            that.sfc.connect(that.thirdDelegator).unlockStake(that.testValidator3ID, ethers.parseEther('1.51'))
+        ).to.be.rejectedWith('not enough locked stake');
+    });
+
+    it('Should unlock after period ended and stash rewards', async () => {
+        await that.node.sealEpoch(1000);
+    
+        await that.sfc.connect(that.thirdDelegator).delegate(that.testValidator3ID, {
+            value: ethers.parseEther('10'),
+        });
+    
+        let unlockedStake = await that.sfc.connect(that.thirdDelegator).getUnlockedStake(that.thirdDelegator.address, that.testValidator3ID);
+        let pendingRewards = await that.sfc.connect(that.thirdDelegator).pendingRewards(that.thirdDelegator.address, that.testValidator3ID);
+    
+        expect(unlockedStake).to.be.eq('10000000000000000000');
+        expect(pendingRewards).to.be.eq('0');
+    
+        await that.sfc.connect(that.thirdDelegator).lockStake(that.testValidator3ID, 60 * 60 * 24 * 14, ethers.parseEther('1'));
+    
+        unlockedStake = await that.sfc.connect(that.thirdDelegator).getUnlockedStake(that.thirdDelegator.address, that.testValidator3ID);
+        pendingRewards = await that.sfc.connect(that.thirdDelegator).pendingRewards(that.thirdDelegator.address, that.testValidator3ID);
+    
+        expect(unlockedStake).to.be.eq('9000000000000000000');
+        expect(pendingRewards).to.be.eq('0');
+    
+        await that.node.sealEpoch(60 * 60 * 24 * 14);
+    
+        unlockedStake = await that.sfc.connect(that.thirdDelegator).getUnlockedStake(that.thirdDelegator.address, that.testValidator3ID);
+        pendingRewards = await that.sfc.connect(that.thirdDelegator).pendingRewards(that.thirdDelegator.address, that.testValidator3ID);
+    
+        expect(unlockedStake).to.equal('9000000000000000000');
+        expect(pendingRewards).to.equal(17682303362391033619905n);
+    
+        await that.node.sealEpoch(60 * 60 * 24 * 14);
+    
+        pendingRewards = await that.sfc.connect(that.thirdDelegator).pendingRewards(that.thirdDelegator.address, that.testValidator3ID);
+        unlockedStake = await that.sfc.connect(that.thirdDelegator).getUnlockedStake(that.thirdDelegator.address, that.testValidator3ID);
+    
+        expect(unlockedStake).to.equal('10000000000000000000');
+        expect(ethers.formatEther(pendingRewards)).to.equal('136316.149516237187466057');
+    
+        await that.sfc.connect(that.thirdDelegator).stashRewards(that.thirdDelegator.address, that.testValidator3ID);
+    });
+    
+})
+
+describe('Test Rewards with lockup Calculation', () => {
+    let that: That & {
+        firstValidator: HardhatEthersSigner,
+        secondValidator: HardhatEthersSigner,
+        thirdValidator: HardhatEthersSigner,
+        firstDelegator: HardhatEthersSigner,
+        secondDelegator: HardhatEthersSigner,
+        thirdDelegator: HardhatEthersSigner,
+        node: BlockchainNode,
+        testValidator1ID: bigint,
+        testValidator2ID: bigint,
+        testValidator3ID: bigint
+    }
+    const fixture = async () => {
+        const [firstValidator, secondValidator, thirdValidator, firstDelegator, secondDelegator, thirdDelegator] = await ethers.getSigners();
+        const sfc = await ethers.getContractAt("SFCUnitTestI", await ethers.deployContract('UnitTestSFC'));
+        const nodeDriver = await ethers.deployContract('NodeDriver')
+        const nodeDriverAuth = await ethers.deployContract('NodeDriverAuth')
+        const lib = await ethers.deployContract('UnitTestSFCLib');
+        const evmWriter = await ethers.deployContract('StubEvmWriter');
+        const initializer = await ethers.deployContract('UnitTestNetworkInitializer');
+
+        await initializer.initializeAll(0, 0, sfc, lib, nodeDriverAuth, nodeDriver, evmWriter, firstValidator);
+        const constants = await ethers.getContractAt(
+            'UnitTestConstantsManager',
+            await sfc.constsAddress(),
+        );
+        await sfc.rebaseTime();
+        await sfc.enableNonNodeCalls();
+
+        await constants.updateBaseRewardPerSecond(ethers.parseEther("1"));
+
+        const node = new BlockchainNode(sfc);
+
+
+        await node.handleTx(await sfc.connect(firstValidator).createValidator(pubkey, {
+            value: ethers.parseEther("10"),
+        }));
+
+        await node.handleTx(await sfc.connect(secondValidator).createValidator(pubkey, {
+            value:ethers.parseEther("5"),
+        }));
+
+        await node.handleTx(await sfc.connect(thirdValidator).createValidator(pubkey, {
+            value: ethers.parseEther("1"),
+        }));
+
+        const testValidator1ID = await sfc.getValidatorID(firstValidator);
+        const testValidator2ID = await sfc.getValidatorID(secondValidator);
+        const testValidator3ID = await sfc.getValidatorID(thirdValidator);
+
+        await sfc.connect(thirdValidator).lockStake(testValidator3ID, 60 * 60 * 24 * 364, ethers.parseEther("1"));
+        await node.sealEpoch(0);
+
+        return {
+            owner: firstValidator,
+            user: secondValidator,
+            firstValidator,
+            secondValidator,
+            thirdValidator,
+            sfc,
+            evmWriter,
+            nodeDriver,
+            nodeDriverAuth,
+            constants,
+            lib,
+            node,
+            firstDelegator,
+            secondDelegator,
+            thirdDelegator,
+            testValidator1ID,
+            testValidator2ID,
+            testValidator3ID
+        };
+    }
+
+    beforeEach(async function () {
+        that = await loadFixture(fixture);
+    })
+
+    it('Should not update slashing refund ratio', async () => {
+        await that.node.sealEpoch(1000);
+    
+        await expect(that.sfc.connect(that.firstValidator)
+            .updateSlashingRefundRatio(that.testValidator3ID, 1))
+            .to.be.rejectedWith("validator isn't slashed");
+    
+        await that.node.sealEpoch(60 * 60 * 24 * 14);
+    });
+    
+    it('Should not sync if validator does not exist', async () => {
+        await expect(that.sfc._syncValidator(33, false))
+            .to.be.rejectedWith("validator doesn't exist");
+    });
+    
 })

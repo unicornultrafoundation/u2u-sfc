@@ -11,6 +11,19 @@ import 'solidity-coverage';
 
 
 const config: HardhatUserConfig = {
+  networks: {
+    hardhat: {
+      allowUnlimitedContractSize: true,
+    },
+  },
+  gasReporter: {
+    currency: 'USD',
+    enabled: !!process.env.REPORT_GAS,
+    gasPrice: 50,
+  },
+  contractSizer: {
+    runOnCompile: true,
+  },
   solidity: {
     version: '0.5.17',
     settings: {
