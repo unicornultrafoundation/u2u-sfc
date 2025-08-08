@@ -1,0 +1,112 @@
+- Node
+  - Skip: Chain tự chạy tự check liên tục
+    - Seal Epoch: SKIP
+    - Seal Epoch Validators: SKIP
+    - Seal Epoch V1: SKIP
+
+- Driver
+  - setGenesisValidator
+  - setGenesisDelegation
+  - deactivateValidator
+
+- SFC
+  ## Getter Functions (View/Pure)
+  - currentSealedEpoch: DONE
+  - currentEpoch: DONE
+  - getEpochSnapshot: DONE
+  - getLockupInfo: DONE
+  - getStake: DONE
+  - getStashedLockupRewards: DONE
+  - getValidator: DONE
+  - getValidatorID: DONE
+  - getValidatorPubkey: DONE
+  - getWithdrawalRequest: DONE
+  - isOwner: DONE
+  - lastValidatorID: DONE
+  - minGasPrice: DONE
+  - owner: DONE
+  - slashingRefundRatio: DONE
+  - stakeTokenizerAddress: DONE
+  - stashedRewardsUntilEpoch: DONE
+  - totalActiveStake: DONE
+  - totalSlashedStake: DONE
+  - totalStake: DONE
+  - totalSupply: DONE
+  - treasuryAddress: DONE
+  - version: DONE
+  - constsAddress: DONE
+  - getEpochValidatorIDs: DONE
+  - getEpochReceivedStake: DONE
+  - getEpochAccumulatedRewardPerToken: DONE
+  - getEpochAccumulatedUptime: DONE
+  - getEpochAccumulatedOriginatedTxsFee: DONE
+  - getEpochOfflineTime: DONE
+  - getEpochOfflineBlocks: DONE
+  - rewardsStash: DONE
+  - getLockedStake: DONE
+  - getSelfStake: DONE
+  - isSlashed: DONE
+  - pendingRewards: DONE
+  - isLockedUp: DONE
+  - getUnlockedStake: DONE
+  - voteBookAddress: FAILED, revert without reason
+  
+  ## Write Functions (State-changing)
+  - createValidator: PARTIALLY DONE
+  - renounceOwnership: DONE
+  - transferOwnership: DONE
+  - updateConstsAddress: DONE
+  - delegate: DONE
+  - undelegate: DONE
+  - withdraw: DONE
+  - deactivateValidator: DONE
+  - stashRewards: DONE
+  - claimRewards: DONE
+  - restakeRewards: DONE
+  - updateBaseRewardPerSecond: SKIP (function exists but reverts)
+  - updateOfflinePenaltyThreshold: DONE
+  - updateSlashingRefundRatio: DONE
+  - updateStakeTokenizerAddress: DONE
+  - updateTreasuryAddress: DONE
+  - mintU2U: DONE
+  - burnU2U: DONE
+  - sealEpoch: SKIP (requires NodeDriverAuth)
+  - sealEpochValidators: SKIP (requires NodeDriverAuth)
+  - lockStake: DONE
+  - relockStake: DONE
+  - unlockStake: DONE
+  - updateVoteBookAddress: DONE
+  
+  ## Special Functions
+  - initialize: SKIP
+  - setGenesisValidator: SKIP
+  - setGenesisDelegation: SKIP
+
+CM:
+  - updateMinSelfStake: DONE
+  - updateMaxDelegatedRatio: DONE
+  - updateValidatorCommission: DONE
+  - updateBurntFeeShare: DONE
+  - updateTreasuryFeeShare: DONE
+  - updateUnlockedRewardRatio: DONE
+  - updateMinLockupDuration: DONE
+  - updateMaxLockupDuration: DONE
+  - updateWithdrawalPeriodEpochs: DONE
+  - updateWithdrawalPeriodTime: DONE
+  - updateBaseRewardPerSecond: DONE
+  - updateOfflinePenaltyThresholdTime: DONE
+  - updateOfflinePenaltyThresholdBlocksNum: DONE
+  - updateTargetGasPowerPerSecond: DONE
+  - updateGasPriceBalancingCounterweight: DONE
+
+- FAILED QUERY:
+  - version: FIXED
+  - getEpochOfflineBlocks: FIXED
+  - getEpochOfflineTime: FIXED
+  - getEpochAccumulatedOriginatedTxsFee: FIXED
+  - getEpochAccumulatedUptime: FIXED
+  - getEpochAccumulatedRewardPerToken: FIXED
+  - getEpochReceivedStake: FIXED
+  - getEpochValidatorIDs: FIXED
+  - rewardsStash: FIXED
+  - getValidator
