@@ -144,7 +144,6 @@ describe('SFC', function () {
         }),
         { numRuns: 10, includeErrorInReport: true }
       );
-      await delay(1000); // Adding a delay to avoid rate limiting issues
     });
 
     it('should fail with value too small', async function () {
@@ -163,7 +162,6 @@ describe('SFC', function () {
         ),
         { numRuns: 10, includeErrorInReport: true }
       );
-      await delay(1000); // Adding a delay to avoid rate limiting issues
     });
 
     it('should fail with value too big', async function () {
@@ -201,7 +199,6 @@ describe('SFC', function () {
         ),
         { numRuns: 5, includeErrorInReport: true, verbose: true }
       );
-      await delay(1000); // Adding a delay to avoid rate limiting issues
     });
   });
 
