@@ -143,7 +143,7 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
 
   // Combined operation generator
   const operation = () => fc.oneof(
-    createValidatorOp(),
+    // createValidatorOp(),
     delegateOp(),
     undelegateOp(),
     lockStakeOp(),

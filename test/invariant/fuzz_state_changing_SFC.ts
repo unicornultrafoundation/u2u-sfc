@@ -110,7 +110,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
               ).to.be.revertedWith('Ownable: caller is not the owner');
               return true;
             } catch (error: any) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }

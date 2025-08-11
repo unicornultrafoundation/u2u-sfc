@@ -33,6 +33,10 @@ const config: HardhatUserConfig = {
     local: {
       url: 'http://localhost:8545',
       accounts: PRIVATE_KEYS
+    },
+    ubuntu: {
+      url: 'http://13.213.43.149:8545',
+      accounts: PRIVATE_KEYS
     }
   },
   gasReporter: {

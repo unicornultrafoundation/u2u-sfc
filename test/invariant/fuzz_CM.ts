@@ -99,7 +99,7 @@ describe('SFC', function () {
               'Ownable: caller is not the owner'
             );
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -138,7 +138,7 @@ describe('SFC', function () {
               'Ownable: caller is not the owner'
             );
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -155,7 +155,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateMaxDelegatedRatio(value)).to.be.revertedWith('too small value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -173,7 +173,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateMaxDelegatedRatio(value)).to.be.revertedWith('too large value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false; // If an error occurs, the test fails
             }
           }
@@ -192,7 +192,7 @@ describe('SFC', function () {
               await that.constants.updateMaxDelegatedRatio(value);
               return true; // If no error, the test passes
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false; // If an error occurs, the test fails
             }
           }
@@ -214,7 +214,7 @@ describe('SFC', function () {
               'Ownable: caller is not the owner'
             );
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -231,7 +231,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateValidatorCommission(value)).to.be.revertedWith('too large value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false; // If an error occurs, the test fails
             }
           }
@@ -250,7 +250,7 @@ describe('SFC', function () {
               await that.constants.updateValidatorCommission(value);
               return true; // If no error, the test passes
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false; // If an error occurs, the test fails
             }
           }
@@ -272,7 +272,7 @@ describe('SFC', function () {
               'Ownable: caller is not the owner'
             );
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -289,7 +289,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateBurntFeeShare(value)).to.be.revertedWith('too large value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -308,7 +308,7 @@ describe('SFC', function () {
               await that.constants.updateBurntFeeShare(value);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -330,7 +330,7 @@ describe('SFC', function () {
               'Ownable: caller is not the owner'
             );
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -347,7 +347,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateTreasuryFeeShare(value)).to.be.revertedWith('too large value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -366,7 +366,7 @@ describe('SFC', function () {
               await that.constants.updateTreasuryFeeShare(value);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -388,7 +388,7 @@ describe('SFC', function () {
               'Ownable: caller is not the owner'
             );
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -405,7 +405,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateUnlockedRewardRatio(value)).to.be.revertedWith('too small value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -423,7 +423,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateUnlockedRewardRatio(value)).to.be.revertedWith('too large value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -442,7 +442,7 @@ describe('SFC', function () {
               await that.constants.updateUnlockedRewardRatio(value);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -464,7 +464,7 @@ describe('SFC', function () {
               'Ownable: caller is not the owner'
             );
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -481,7 +481,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateMinLockupDuration(value)).to.be.revertedWith('too small value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -499,7 +499,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateMinLockupDuration(value)).to.be.revertedWith('too large value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -518,7 +518,7 @@ describe('SFC', function () {
               await that.constants.updateMinLockupDuration(value);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -540,7 +540,7 @@ describe('SFC', function () {
               'Ownable: caller is not the owner'
             );
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -557,7 +557,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateMaxLockupDuration(value)).to.be.revertedWith('too small value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -575,7 +575,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateMaxLockupDuration(value)).to.be.revertedWith('too large value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -594,7 +594,7 @@ describe('SFC', function () {
               await that.constants.updateMaxLockupDuration(value);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -616,7 +616,7 @@ describe('SFC', function () {
               'Ownable: caller is not the owner'
             );
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -633,7 +633,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateWithdrawalPeriodEpochs(value)).to.be.revertedWith('too small value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -651,7 +651,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateWithdrawalPeriodEpochs(value)).to.be.revertedWith('too large value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -670,7 +670,7 @@ describe('SFC', function () {
               await that.constants.updateWithdrawalPeriodEpochs(value);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -692,7 +692,7 @@ describe('SFC', function () {
               'Ownable: caller is not the owner'
             );
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -709,7 +709,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateWithdrawalPeriodTime(value)).to.be.revertedWith('too small value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -727,7 +727,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateWithdrawalPeriodTime(value)).to.be.revertedWith('too large value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -746,7 +746,7 @@ describe('SFC', function () {
               await that.constants.updateWithdrawalPeriodTime(value);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -768,7 +768,7 @@ describe('SFC', function () {
               'Ownable: caller is not the owner'
             );
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -785,7 +785,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateBaseRewardPerSecond(value)).to.be.revertedWith('too small value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -803,7 +803,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateBaseRewardPerSecond(value)).to.be.revertedWith('too large value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -822,7 +822,7 @@ describe('SFC', function () {
               await that.constants.updateBaseRewardPerSecond(value);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -844,7 +844,7 @@ describe('SFC', function () {
               'Ownable: caller is not the owner'
             );
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -861,7 +861,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateOfflinePenaltyThresholdTime(value)).to.be.revertedWith('too small value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -879,7 +879,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateOfflinePenaltyThresholdTime(value)).to.be.revertedWith('too large value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -898,7 +898,7 @@ describe('SFC', function () {
               await that.constants.updateOfflinePenaltyThresholdTime(value);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -920,7 +920,7 @@ describe('SFC', function () {
               'Ownable: caller is not the owner'
             );
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -937,7 +937,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateOfflinePenaltyThresholdBlocksNum(value)).to.be.revertedWith('too small value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -955,7 +955,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateOfflinePenaltyThresholdBlocksNum(value)).to.be.revertedWith('too large value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -974,7 +974,7 @@ describe('SFC', function () {
               await that.constants.updateOfflinePenaltyThresholdBlocksNum(value);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -996,7 +996,7 @@ describe('SFC', function () {
               'Ownable: caller is not the owner'
             );
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -1013,7 +1013,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateTargetGasPowerPerSecond(value)).to.be.revertedWith('too small value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -1031,7 +1031,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateTargetGasPowerPerSecond(value)).to.be.revertedWith('too large value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -1050,7 +1050,7 @@ describe('SFC', function () {
               await that.constants.updateTargetGasPowerPerSecond(value);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -1072,7 +1072,7 @@ describe('SFC', function () {
               'Ownable: caller is not the owner'
             );
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -1089,7 +1089,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateGasPriceBalancingCounterweight(value)).to.be.revertedWith('too small value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -1107,7 +1107,7 @@ describe('SFC', function () {
             try {
               await expect(that.constants.updateGasPriceBalancingCounterweight(value)).to.be.revertedWith('too large value');
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -1126,7 +1126,7 @@ describe('SFC', function () {
               await that.constants.updateGasPriceBalancingCounterweight(value);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
