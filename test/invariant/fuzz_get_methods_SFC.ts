@@ -3,6 +3,8 @@ import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import { beforeEach } from 'mocha';
+import * as fs from 'fs';
+import * as path from 'path';
 
 import {
   SFCUnitTestI,
@@ -32,14 +34,36 @@ interface That {
 
 describe('SFC Getter Methods Fuzz Tests', function () {
   let that: That;
+
+  const addressesFilePath = path.join(__dirname, '../contract-addresses.json');
+
+  function loadContractAddresses() {
+    try {
+      const addressesData = fs.readFileSync(addressesFilePath, 'utf8');
+      return JSON.parse(addressesData);
+    } catch (error) {
+      console.log('Contract addresses file not found, using default addresses');
+      return {
+        sfc: "0xfc00face00000000000000000000000000000000",
+        nodeDriver: "0xd100a01e00000000000000000000000000000000",
+        nodeDriverAuth: "0xd100ae0000000000000000000000000000000000",
+        evmWriter: "0xd100ec0000000000000000000000000000000000",
+        constants: "0x6CA548f6DF5B540E72262E935b6Fe3e72cDd68C9",
+        sfcProxy: "0x2a57261F79009f35B9b2d4C146471f47BaEf3f77"
+      };
+    }
+  }
+
   const fixture = async () => {
     const signers = await ethers.getSigners();
-    const sfc = await ethers.getContractAt('SFCI', '0xfc00face00000000000000000000000000000000');
-    const nodeDriver = await ethers.getContractAt('NodeDriver', '0xd100a01e00000000000000000000000000000000');
-    const nodeDriverAuth = await ethers.getContractAt('NodeDriverAuth', '0xd100ae0000000000000000000000000000000000');
+    const addresses = loadContractAddresses();
+    
+    const sfc = await ethers.getContractAt('SFCI', addresses.sfc);
+    const nodeDriver = await ethers.getContractAt('NodeDriver', addresses.nodeDriver);
+    const nodeDriverAuth = await ethers.getContractAt('NodeDriverAuth', addresses.nodeDriverAuth);
     const lib = await ethers.getContractAt('SFCLib', '0xfc01face00000000000000000000000000000000');
-    const evmWriter = await ethers.getContractAt('EVMWriter', '0xd100ec0000000000000000000000000000000000');
-    const constants = await ethers.getContractAt('ConstantsManager', '0x6CA548f6DF5B540E72262E935b6Fe3e72cDd68C9');
+    const evmWriter = await ethers.getContractAt('EVMWriter', addresses.evmWriter);
+    const constants = await ethers.getContractAt('ConstantsManager', addresses.constants);
 
     return {
       signers,
@@ -69,7 +93,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
             expect(currentSealedEpoch).to.be.gte(0n);
             return true;
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -88,7 +112,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
             expect(currentEpoch).to.equal(currentSealedEpoch + 1n);
             return true;
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -106,7 +130,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
             expect(totalSupply).to.be.gte(0n);
             return true;
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -124,7 +148,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
             expect(totalStake).to.be.gte(0n);
             return true;
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -142,7 +166,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
             expect(totalActiveStake).to.be.gte(0n);
             return true;
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -160,7 +184,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
             expect(totalSlashedStake).to.be.gte(0n);
             return true;
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -178,7 +202,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
             expect(lastValidatorID).to.be.gte(0n);
             return true;
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -196,7 +220,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
             expect(minGasPrice).to.be.gt(0n);
             return true;
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -215,7 +239,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
             expect(ethers.isAddress(owner)).to.be.true;
             return true;
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -234,7 +258,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
             }
             return true;
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -253,7 +277,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
             }
             return true;
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -270,7 +294,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
             expect(ethers.isAddress(constsAddress)).to.be.true;
             return true;
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -320,7 +344,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(ethers.isAddress(validator[6])).to.be.true; // auth
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -341,7 +365,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(validatorID).to.be.gte(0n);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -361,7 +385,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(pubkey).to.be.a('string');
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -382,7 +406,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(selfStake).to.be.gte(0n);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -402,7 +426,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(isSlashed).to.be.a('boolean');
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -424,7 +448,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(ratio).to.be.lte(ethers.parseEther('1')); // Should not exceed 100%
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -448,7 +472,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(stake).to.be.gte(0n);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -470,7 +494,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(lockedStake).to.be.gte(0n);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -492,7 +516,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(unlockedStake).to.be.gte(0n);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -513,7 +537,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(isLockedUp).to.be.a('boolean');
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -538,7 +562,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(lockupInfo[3]).to.be.a('bigint'); // duration
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -562,7 +586,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(pendingRewards).to.be.gte(0n);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -584,7 +608,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(rewardsStash).to.be.gte(0n);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -608,7 +632,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(rewards[2]).to.be.a('bigint'); // unlockedReward
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -630,7 +654,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(epoch).to.be.gte(0n);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -659,7 +683,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(snapshot[6]).to.be.a('bigint'); // totalSupply
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -683,7 +707,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               }
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -705,7 +729,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(receivedStake).to.be.gte(0n);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -727,7 +751,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(rewardPerToken).to.be.gte(0n);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -749,7 +773,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(uptime).to.be.gte(0n);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -771,7 +795,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(txsFee).to.be.gte(0n);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -793,7 +817,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(offlineTime).to.be.gte(0n);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -815,7 +839,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(offlineBlocks).to.be.gte(0n);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -842,7 +866,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(withdrawalRequest[2]).to.be.a('bigint'); // amount
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -864,10 +888,9 @@ describe('SFC Getter Methods Fuzz Tests', function () {
             try {
               const signer = that.signers[signerIndex];
               const isOwner = await that.sfc.isOwner();
-              console.log(' ---> isOwner: ', isOwner);
               return true;
             } catch (error: any) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -886,7 +909,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
             expect(version.length).to.equal(8); // "0x" + 3 bytes
             return true;
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -906,7 +929,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
             expect(totalActiveStake).to.be.lte(totalStake);
             return true;
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),
@@ -927,7 +950,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
               expect(lockedStake).to.be.lte(totalStake);
               return true;
             } catch (error) {
-              console.log(' ---> error: ', error);
+              // console.log(' ---> error: ', error);
               return false;
             }
           }
@@ -946,7 +969,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
             expect(currentEpoch).to.equal(currentSealedEpoch + 1n);
             return true;
           } catch (error) {
-            console.log(' ---> error: ', error);
+            // console.log(' ---> error: ', error);
             return false;
           }
         }),

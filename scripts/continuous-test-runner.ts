@@ -22,7 +22,7 @@ class ContinuousTestRunner {
   private startTime = new Date();
   private isShuttingDown = false;
   private restartDelay = 100000; // 100 seconds between restarts
-  private testDelay = 10000; // 10 seconds between test runs
+  private testDelay = 5000; // 10 seconds between test runs
   private maxLogSize = 100 * 1024 * 1024; // 100MB max log file size
 
   private readonly command = 'bunx';

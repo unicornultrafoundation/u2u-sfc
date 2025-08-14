@@ -3,6 +3,8 @@ import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { expect } from 'chai';
 import { ethers } from 'hardhat';
 import { beforeEach } from 'mocha';
+import * as fs from 'fs';
+import * as path from 'path';
 
 import {
   SFCUnitTestI,
@@ -32,14 +34,36 @@ interface That {
 
 describe('SFC State-Changing Functions Fuzz Tests', function () {
   let that: That;
+
+  const addressesFilePath = path.join(__dirname, '../contract-addresses.json');
+
+  function loadContractAddresses() {
+    try {
+      const addressesData = fs.readFileSync(addressesFilePath, 'utf8');
+      return JSON.parse(addressesData);
+    } catch (error) {
+      console.log('Contract addresses file not found, using default addresses');
+      return {
+        sfc: "0xfc00face00000000000000000000000000000000",
+        nodeDriver: "0xd100a01e00000000000000000000000000000000",
+        nodeDriverAuth: "0xd100ae0000000000000000000000000000000000",
+        evmWriter: "0xd100ec0000000000000000000000000000000000",
+        constants: "0x6CA548f6DF5B540E72262E935b6Fe3e72cDd68C9",
+        sfcProxy: "0x2a57261F79009f35B9b2d4C146471f47BaEf3f77"
+      };
+    }
+  }
+
   const fixture = async () => {
     const signers = await ethers.getSigners();
-    const sfc = await ethers.getContractAt('SFCI', '0xfc00face00000000000000000000000000000000');
-    const nodeDriver = await ethers.getContractAt('NodeDriver', '0xd100a01e00000000000000000000000000000000');
-    const nodeDriverAuth = await ethers.getContractAt('NodeDriverAuth', '0xd100ae0000000000000000000000000000000000');
+    const addresses = loadContractAddresses();
+    
+    const sfc = await ethers.getContractAt('SFCI', addresses.sfc);
+    const nodeDriver = await ethers.getContractAt('NodeDriver', addresses.nodeDriver);
+    const nodeDriverAuth = await ethers.getContractAt('NodeDriverAuth', addresses.nodeDriverAuth);
     const lib = await ethers.getContractAt('SFCLib', '0xfc01face00000000000000000000000000000000');
-    const evmWriter = await ethers.getContractAt('EVMWriter', '0xd100ec0000000000000000000000000000000000');
-    const constants = await ethers.getContractAt('ConstantsManager', '0x6CA548f6DF5B540E72262E935b6Fe3e72cDd68C9');
+    const evmWriter = await ethers.getContractAt('EVMWriter', addresses.evmWriter);
+    const constants = await ethers.getContractAt('ConstantsManager', addresses.constants);
 
     return {
       signers,
