@@ -60,7 +60,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Basic State Getters', function () {
     it('should return valid currentSealedEpoch', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -78,7 +78,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid currentEpoch', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -97,7 +97,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid totalSupply', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -115,7 +115,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid totalStake', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -133,7 +133,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid totalActiveStake', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -151,7 +151,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid totalSlashedStake', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -169,7 +169,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid lastValidatorID', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -187,7 +187,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid minGasPrice', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -207,7 +207,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Address Getters', function () {
     it('should return valid owner address', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -224,7 +224,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid treasuryAddress', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -243,7 +243,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid stakeTokenizerAddress', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -262,7 +262,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid constsAddress', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -279,7 +279,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     // it('should handle voteBookAddress with random addresses', async function () {
-    //   await delay(100);
+    //   await delay(50);
     //   fc.assert(
     //     fc.asyncProperty(
     //       validEthereumAddress(),
@@ -303,7 +303,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Validator-related Getters', function () {
     it('should handle getValidator with random validatorIDs', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1n, max: 1000n }),
@@ -330,7 +330,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getValidatorID with random addresses', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -351,7 +351,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getValidatorPubkey with random validatorIDs', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1n, max: 1000n }),
@@ -371,7 +371,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getSelfStake with random validatorIDs', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1n, max: 1000n }),
@@ -392,7 +392,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle isSlashed with random validatorIDs', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1n, max: 1000n }),
@@ -412,7 +412,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle slashingRefundRatio with random validatorIDs', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1n, max: 1000n }),
@@ -436,7 +436,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Staking-related Getters', function () {
     it('should handle getStake with random parameters', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -458,7 +458,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getLockedStake with random parameters', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -480,7 +480,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getUnlockedStake with random parameters', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -502,7 +502,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle isLockedUp with random parameters', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -523,7 +523,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getLockupInfo with random parameters', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -550,7 +550,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Rewards-related Getters', function () {
     it('should handle pendingRewards with random parameters', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -572,7 +572,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle rewardsStash with random parameters', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -594,7 +594,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getStashedLockupRewards with random parameters', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -618,7 +618,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle stashedRewardsUntilEpoch with random parameters', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -642,7 +642,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Epoch-related Getters', function () {
     it('should handle getEpochSnapshot with random epochs', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 1000n }),
@@ -669,7 +669,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getEpochValidatorIDs with random epochs', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 100n }),
@@ -693,7 +693,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getEpochReceivedStake with random parameters', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 100n }),
@@ -715,7 +715,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getEpochAccumulatedRewardPerToken with random parameters', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 100n }),
@@ -737,7 +737,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getEpochAccumulatedUptime with random parameters', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 100n }),
@@ -759,7 +759,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getEpochAccumulatedOriginatedTxsFee with random parameters', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 100n }),
@@ -781,7 +781,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getEpochOfflineTime with random parameters', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 100n }),
@@ -803,7 +803,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getEpochOfflineBlocks with random parameters', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 100n }),
@@ -827,7 +827,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Withdrawal-related Getters', function () {
     it('should handle getWithdrawalRequest with random parameters', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -854,7 +854,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Ownership and Version', function () {
     it('should return valid isOwner', async function () {
-      await delay(100);
+      await delay(50);
 
       fc.assert(
         fc.asyncProperty(
@@ -877,7 +877,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid version', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -897,7 +897,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Consistency Tests', function () {
     it('should maintain totalActiveStake <= totalStake', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -915,7 +915,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should maintain lockedStake <= totalStake for any delegator', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -937,7 +937,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should have currentEpoch = currentSealedEpoch + 1', async function () {
-      await delay(100);
+      await delay(50);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
