@@ -192,6 +192,11 @@ describe('Comprehensive SFC Fuzz Testing', function () {
     }
   }
 
+  this.beforeEach(async function () {
+    const { constants } = await deployOrUseExistingSFC();
+    await constants.updateTargetGasPowerPerSecond(500_000_000); // Ensure target gas power is set before tests
+  })
+
   describe('SFC View Functions Coverage', function () {
     it('should test all basic view functions', async function () {
       const { sfc, sfcProxy } = await deployOrUseExistingSFC();

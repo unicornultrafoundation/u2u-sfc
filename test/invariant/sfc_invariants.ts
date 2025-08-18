@@ -420,9 +420,15 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
   }
 
   describe('🔄 Randomized Operation Sequence Invariants', function () {
+
+    this.beforeEach(async function () {
+      // Reset state before each test
+      that = await fixture();
+      await that.constants.updateTargetGasPowerPerSecond(500_000_000); // Ensure target gas power is set before tests
+    });
     
     it('should maintain state consistency after random operation sequences', async function () {
-      await delay(50);
+      await delay(100);
       fc.assert(
         fc.asyncProperty(
           fc.array(operation(), { minLength: 3, maxLength: 10 }),
@@ -471,7 +477,7 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
     });
 
     it('should maintain staking invariants through delegation workflows', async function () {
-      await delay(50);
+      await delay(100);
       fc.assert(
         fc.asyncProperty(
           fc.array(
@@ -511,7 +517,7 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
     });
 
     it('should maintain economic invariants through reward operations', async function () {
-      await delay(50);
+      await delay(100);
       fc.assert(
         fc.asyncProperty(
           fc.array(
@@ -550,7 +556,7 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
     });
 
     it('should maintain lockup invariants through staking operations', async function () {
-      await delay(50);
+      await delay(100);
       fc.assert(
         fc.asyncProperty(
           fc.array(
@@ -592,7 +598,7 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
     });
 
     it('should maintain validator consistency through creation and management', async function () {
-      await delay(50);
+      await delay(100);
       fc.assert(
         fc.asyncProperty(
           fc.array(
@@ -652,7 +658,7 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
     });
 
     it('should handle complex mixed operation sequences', async function () {
-      await delay(50);
+      await delay(100);
       fc.assert(
         fc.asyncProperty(
           fc.array(operation(), { minLength: 8, maxLength: 15 }),
