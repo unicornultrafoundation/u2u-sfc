@@ -83,6 +83,8 @@ describe('SFC', function () {
 
   before(async function () {
     that = await fixture();
+    const tx = await that.constants.updateTargetGasPowerPerSecond(500_000_000); // Ensure target gas power is set before tests
+    await tx.wait();
   });
 
   describe('updateMinSelfStake', function () {
