@@ -21,8 +21,8 @@ class ContinuousTestRunner {
   private runCount = 0;
   private startTime = new Date();
   private isShuttingDown = false;
-  private restartDelay = 100000; // 100 seconds between restarts
-  private testDelay = 5000; // 10 seconds between test runs
+  private testDelay = 20000; // 20 seconds between test runs
+  private updateScriptRetryDelay = 30000; // 30 seconds between update script retries
   private maxLogSize = 100 * 1024 * 1024; // 100MB max log file size
 
   private readonly command = 'bunx';
@@ -139,10 +139,10 @@ class ContinuousTestRunner {
   }
 
   private async start(): Promise<void> {
-    // Run the update-target-gas-power script first
-    await this.runUpdateTargetGasPowerScript();
+    // Run the update-target-gas-power script first with retry logic
+    await this.runUpdateTargetGasPowerScriptWithRetry();
 
-    await delay(5000);
+    await delay(20000);
 
     if (this.isShuttingDown) return;
 
@@ -235,10 +235,33 @@ class ContinuousTestRunner {
     }
   }
 
+  private async runUpdateTargetGasPowerScriptWithRetry(): Promise<void> {
+    let attempt = 1;
+    const maxAttempts = Number.MAX_SAFE_INTEGER; // Retry indefinitely until success
+
+    while (!this.isShuttingDown) {
+      try {
+        this.log(`🎢 Running update-target-gas-power script (attempt ${attempt})...`);
+        await this.runUpdateTargetGasPowerScript();
+        this.log('✅ Update target gas power script completed successfully');
+        return; // Success, exit retry loop
+      } catch (error: any) {
+        this.log(`❌ Update target gas power script failed on attempt ${attempt}: ${error.message}`);
+        
+        if (this.isShuttingDown) {
+          this.log('🛑 Shutting down, stopping retry attempts');
+          return;
+        }
+        
+        this.log(`⏰ Retrying update script in ${this.updateScriptRetryDelay / 1000} seconds...`);
+        await delay(this.updateScriptRetryDelay);
+        attempt++;
+      }
+    }
+  }
+
   private async runUpdateTargetGasPowerScript(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.log('🎢 Running update-target-gas-power script...');
-      
       const updateProcess = spawn('bunx', ['hardhat', 'run', 'scripts/update-target-gas-power.ts', '--network', 'ubuntu'], {
         stdio: ['pipe', 'pipe', 'pipe'],
         cwd: process.cwd(),
@@ -277,22 +300,16 @@ class ContinuousTestRunner {
 
       updateProcess.on('exit', (code, signal) => {
         if (code === 0) {
-          this.log('✅ Update target gas power script completed successfully');
           resolve();
         } else {
-          this.log(`❌ Update target gas power script failed (code: ${code}, signal: ${signal})`);
-          this.log('☠️  Terminating continuous test runner due to update failure');
-          this.cleanup();
-          reject(new Error(`Update script failed with code ${code}`));
+          reject(new Error(`Update script failed with code ${code}, signal: ${signal}`));
         }
       });
 
       updateProcess.on('error', (error) => {
-        this.log(`💥 Failed to run update script: ${error.message}`);
         if (error.message.includes('ENOENT')) {
           this.log('💡 Make sure bun is installed: curl -fsSL https://bun.sh/install | bash');
         }
-        this.cleanup();
         reject(error);
       });
 
@@ -306,7 +323,6 @@ class ContinuousTestRunner {
               updateProcess.kill('SIGKILL');
             }
           }, 5000);
-          this.cleanup();
           reject(new Error('Update script timed out'));
         }
       }, 120000); // 2 minutes timeout

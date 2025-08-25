@@ -85,7 +85,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
 
   describe('Ownership Functions', function () {
     // it('should handle transferOwnership with random valid addresses', async function () {
-    //   await delay(100);
+    //   await delay(200);
     //   fc.assert(
     //     fc.asyncProperty(
     //       validEthereumAddress(),
@@ -122,7 +122,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
     // });
 
     it('should handle transferOwnership with non-owner callers', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           fc.integer({ min: 1, max: that.signers.length - 1 }),
@@ -145,7 +145,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
     });
 
     // it('should handle renounceOwnership', async function () {
-    //   await delay(100);
+    //   await delay(200);
     //   fc.assert(
     //     fc.asyncProperty(fc.constant(null), async () => {
     //       try {
@@ -169,7 +169,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
 
   describe('Validator Operations', function () {
     it('should handle createValidator with valid parameters', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           validPubkey(),
@@ -210,7 +210,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
     });
 
     it('should handle delegate with random parameters', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1n, max: 1000n }),
@@ -248,7 +248,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
     });
 
     it('should handle undelegate with random parameters', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1n, max: 1000n }),
@@ -285,7 +285,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
     });
 
     it('should handle withdraw with random parameters', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1n, max: 1000n }),
@@ -324,7 +324,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
 
   describe('Reward Operations', function () {
     it('should handle stashRewards with random parameters', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -360,7 +360,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
     });
 
     it('should handle claimRewards with random parameters', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1n, max: 1000n }),
@@ -398,7 +398,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
     });
 
     it('should handle restakeRewards with random parameters', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1n, max: 1000n }),
@@ -439,7 +439,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
 
   describe('Admin Operations', function () {
     it('should handle updateOfflinePenaltyThreshold with authorized caller', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 100n, max: 1000000n }),
@@ -466,7 +466,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
     });
 
     it('should handle mintU2U with owner', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -502,7 +502,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
     });
 
     it('should handle burnU2U with owner', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: ethers.parseEther('0.1'), max: ethers.parseEther('100') }),
@@ -540,7 +540,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
 
   describe('Staking Operations', function () {
     it('should handle lockStake with random parameters', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1n, max: 1000n }),
@@ -579,7 +579,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
     });
 
     it('should handle relockStake with random parameters', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1n, max: 1000n }),
@@ -617,7 +617,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
     });
 
     it('should handle unlockStake with random parameters', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1n, max: 1000n }),
@@ -658,7 +658,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
 
   describe('Deactivation and Slashing', function () {
     it('should handle deactivateValidator with authorized caller', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1n, max: 1000n }),
@@ -688,7 +688,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
     });
 
     it('should handle updateSlashingRefundRatio with owner', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1n, max: 1000n }),
@@ -724,7 +724,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
 
   describe('Address Update Operations', function () {
     // it('should handle updateConstsAddress with owner', async function () {
-    //   await delay(100);
+    //   await delay(200);
     //   fc.assert(
     //     fc.asyncProperty(
     //       validEthereumAddress(),
@@ -756,7 +756,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
     // });
 
     it('should handle updateStakeTokenizerAddress with owner', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -789,7 +789,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
     });
 
     it('should handle updateTreasuryAddress with owner', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -822,7 +822,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
     });
 
     it('should handle updateVoteBookAddress with owner', async function () {
-      await delay(100);
+      await delay(200);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),

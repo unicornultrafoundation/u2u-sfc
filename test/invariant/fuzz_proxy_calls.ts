@@ -219,6 +219,7 @@ describe('Comprehensive SFC Fuzz Testing', function () {
       ];
 
       for (const funcName of viewFunctions) {
+        await delay(200);
         const result = await safeDelegateCall(sfcProxy, sfc, funcName);
         console.log(`${funcName}: success=${result.success}`);
         expect(typeof result.success).to.equal('boolean');
@@ -245,6 +246,7 @@ describe('Comprehensive SFC Fuzz Testing', function () {
       ];
 
       for (const func of validatorFunctions) {
+        await delay(200);
         const result = await safeDelegateCall(sfcProxy, sfc, func.name, func.params);
         console.log(`${func.name}: success=${result.success}`);
         expect(typeof result.success).to.equal('boolean');
@@ -266,6 +268,7 @@ describe('Comprehensive SFC Fuzz Testing', function () {
       ];
 
       for (const func of epochFunctions) {
+        await delay(200);
         const result = await safeDelegateCall(sfcProxy, sfc, func.name, func.params);
         console.log(`${func.name}: success=${result.success}`);
         expect(typeof result.success).to.equal('boolean');
@@ -282,6 +285,7 @@ describe('Comprehensive SFC Fuzz Testing', function () {
       ];
 
       for (const func of lockupFunctions) {
+        await delay(200);
         const result = await safeDelegateCall(sfcProxy, sfc, func.name, func.params);
         console.log(`${func.name}: success=${result.success}`);
         expect(typeof result.success).to.equal('boolean');
@@ -306,6 +310,7 @@ describe('Comprehensive SFC Fuzz Testing', function () {
         const randomValidatorId = Math.floor(Math.random() * 1000) + 1;
         
         for (const funcName of validatorIdFunctions) {
+          await delay(200);
           const result = await safeDelegateCall(sfcProxy, sfc, funcName, [randomValidatorId]);
           expect(typeof result.success).to.equal('boolean');
           console.log(`${funcName}(${randomValidatorId}): success=${result.success}`);
@@ -340,6 +345,7 @@ describe('Comprehensive SFC Fuzz Testing', function () {
         const randomValidatorId = Math.floor(Math.random() * 100) + 1;
 
         for (const funcName of addressValidatorFunctions) {
+          await delay(200);
           const result = await safeDelegateCall(sfcProxy, sfc, funcName, [randomAddress, randomValidatorId]);
           expect(typeof result.success).to.equal('boolean');
           
@@ -372,6 +378,7 @@ describe('Comprehensive SFC Fuzz Testing', function () {
         const randomEpoch = Math.floor(Math.random() * 1000);
 
         for (const funcName of epochFunctions) {
+          await delay(200);
           const result = await safeDelegateCall(sfcProxy, sfc, funcName, [randomEpoch]);
           expect(typeof result.success).to.equal('boolean');
           console.log(`${funcName}(${randomEpoch}): success=${result.success}`);
@@ -384,6 +391,7 @@ describe('Comprehensive SFC Fuzz Testing', function () {
         const randomValidatorId = Math.floor(Math.random() * 100) + 1;
 
         for (const funcName of epochValidatorFunctions) {
+          await delay(200);
           const result = await safeDelegateCall(sfcProxy, sfc, funcName, [randomEpoch, randomValidatorId]);
           expect(typeof result.success).to.equal('boolean');
           
@@ -400,6 +408,7 @@ describe('Comprehensive SFC Fuzz Testing', function () {
       const testAddresses = [validator1.address, validator2.address, ethers.ZeroAddress];
 
       for (let i = 0; i < 12; i++) {
+        await delay(200);
         const randomAddress = testAddresses[i % testAddresses.length];
         const randomValidatorId = Math.floor(Math.random() * 50) + 1;
         const randomWrId = Math.floor(Math.random() * 10);
@@ -443,6 +452,7 @@ describe('Comprehensive SFC Fuzz Testing', function () {
 
       for (const value of extremeValues) {
         for (const funcName of singleParamFunctions) {
+          await delay(200);
           const result = await safeDelegateCall(sfcProxy, sfc, funcName, [value]);
           expect(typeof result.success).to.equal('boolean');
           console.log(`${funcName}(${value.toString().slice(0,10)}...): success=${result.success}`);
@@ -470,6 +480,7 @@ describe('Comprehensive SFC Fuzz Testing', function () {
 
       for (const address of extremeAddresses) {
         for (const funcName of addressFunctions) {
+          await delay(200);
           const params = funcName === 'getValidatorID' ? [address] : [address, 1];
           const result = await safeDelegateCall(sfcProxy, sfc, funcName, params);
           expect(typeof result.success).to.equal('boolean');
@@ -488,6 +499,7 @@ describe('Comprehensive SFC Fuzz Testing', function () {
 
       // Run 100 random calls
       for (let i = 0; i < 100; i++) {
+        await delay(200);
         const randomSelector = ethers.hexlify(ethers.randomBytes(4));
         
         try {
@@ -555,6 +567,7 @@ describe('Comprehensive SFC Fuzz Testing', function () {
       ];
 
       for (const func of allFunctions) {
+        await delay(200);
         totalTests++;
         const result = await safeDelegateCall(sfcProxy, sfc, func.name, func.params);
         if (result.success) {
@@ -572,3 +585,8 @@ describe('Comprehensive SFC Fuzz Testing', function () {
     });
   });
 });
+
+// Simple delay to avoid rate limits or nonce issues
+function delay(ms: number) {
+  return new Promise( resolve => setTimeout(resolve, ms) );
+}
