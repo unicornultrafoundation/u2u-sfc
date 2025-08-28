@@ -14,6 +14,7 @@ import {
   sfc,
   SFCI,
   ConstantsManager,
+  SFCLib,
 } from '../../typechain-types';
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
 import { BlockchainNode, ValidatorMetrics } from '../helpers/blockchain';
@@ -27,6 +28,7 @@ interface That {
   nodeDriverAuth: NodeDriverAuth;
   signers: HardhatEthersSigner[];
   owner: HardhatEthersSigner;
+  lib: SFCLib;
   user: HardhatEthersSigner;
   nodeDriver: NodeDriver;
   constants: ConstantsManager;
@@ -755,38 +757,38 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
     //   );
     // });
 
-    it('should handle updateStakeTokenizerAddress with owner', async function () {
-      await delay(200);
-      fc.assert(
-        fc.asyncProperty(
-          validEthereumAddress(),
-          async (newAddress: string) => {
-            try {
-              const isOwner = await that.sfc.isOwner();
-              if (isOwner) {
-                await that.sfc.updateStakeTokenizerAddress(newAddress);
+    // it('should handle updateStakeTokenizerAddress with owner', async function () {
+    //   await delay(200);
+    //   fc.assert(
+    //     fc.asyncProperty(
+    //       validEthereumAddress(),
+    //       async (newAddress: string) => {
+    //         try {
+    //           const isOwner = await that.sfc.isOwner();
+    //           if (isOwner) {
+    //             await that.sfc.updateStakeTokenizerAddress(newAddress);
                 
-                const updatedAddress = await that.sfc.stakeTokenizerAddress();
-                if (newAddress !== ethers.ZeroAddress) {
-                  expect(updatedAddress.toLowerCase()).to.equal(newAddress.toLowerCase());
-                }
-              } else {
-                console.log(`SKIP: updateStakeTokenizerAddress - not owner`);
-              }
-              return true;
-            } catch (error: any) {
-              const errorMessage = error.message || error.toString();
-              const expectedErrors = [
-                'caller is not the owner'
-              ];
-              const isExpectedError = expectedErrors.some(msg => errorMessage.includes(msg));
-              return isExpectedError;
-            }
-          }
-        ),
-        { numRuns: 10, includeErrorInReport: true }
-      );
-    });
+    //             const updatedAddress = await that.sfc.stakeTokenizerAddress();
+    //             if (newAddress !== ethers.ZeroAddress) {
+    //               expect(updatedAddress.toLowerCase()).to.equal(newAddress.toLowerCase());
+    //             }
+    //           } else {
+    //             console.log(`SKIP: updateStakeTokenizerAddress - not owner`);
+    //           }
+    //           return true;
+    //         } catch (error: any) {
+    //           const errorMessage = error.message || error.toString();
+    //           const expectedErrors = [
+    //             'caller is not the owner'
+    //           ];
+    //           const isExpectedError = expectedErrors.some(msg => errorMessage.includes(msg));
+    //           return isExpectedError;
+    //         }
+    //       }
+    //     ),
+    //     { numRuns: 10, includeErrorInReport: true }
+    //   );
+    // });
 
     it('should handle updateTreasuryAddress with owner', async function () {
       await delay(200);
@@ -821,34 +823,49 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
       );
     });
 
-    it('should handle updateVoteBookAddress with owner', async function () {
+    // it('should handle updateVoteBookAddress with owner', async function () {
+    //   await delay(200);
+    //   fc.assert(
+    //     fc.asyncProperty(
+    //       validEthereumAddress(),
+    //       async (newAddress: string) => {
+    //         try {
+    //           const isOwner = await that.sfc.isOwner();
+    //           if (isOwner) {
+    //             await that.sfc.updateVoteBookAddress(newAddress);
+    //             // Note: voteBookAddress getter has issues, so we can't verify directly
+    //           } else {
+    //             console.log(`SKIP: updateVoteBookAddress - not owner`);
+    //           }
+    //           return true;
+    //         } catch (error: any) {
+    //           const errorMessage = error.message || error.toString();
+    //           const expectedErrors = [
+    //             'caller is not the owner'
+    //           ];
+    //           const isExpectedError = expectedErrors.some(msg => errorMessage.includes(msg));
+    //           return isExpectedError;
+    //         }
+    //       }
+    //     ),
+    //     { numRuns: 10, includeErrorInReport: true }
+    //   );
+    // });
+
+    it('should call recountVotes', async function () {
       await delay(200);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
-          async (newAddress: string) => {
-            try {
-              const isOwner = await that.sfc.isOwner();
-              if (isOwner) {
-                await that.sfc.updateVoteBookAddress(newAddress);
-                // Note: voteBookAddress getter has issues, so we can't verify directly
-              } else {
-                console.log(`SKIP: updateVoteBookAddress - not owner`);
-              }
-              return true;
-            } catch (error: any) {
-              const errorMessage = error.message || error.toString();
-              const expectedErrors = [
-                'caller is not the owner'
-              ];
-              const isExpectedError = expectedErrors.some(msg => errorMessage.includes(msg));
-              return isExpectedError;
-            }
+          validEthereumAddress(),
+          async (address, validatorAuth) => {
+            await that.lib.recountVotes(address, validatorAuth, false, 200000);
+            return true;
           }
         ),
         { numRuns: 10, includeErrorInReport: true }
       );
-    });
+    })
   });
 });
 

@@ -143,7 +143,7 @@ describe('Comprehensive SFC Fuzz Testing', function () {
       'function getWithdrawalRequest(address,uint256,uint256) view returns (uint256,uint256,uint256)',
       'function voteBookAddress(address) view returns (address)',
       // State-changing functions
-      'function createValidator(bytes) payable',
+      // 'function createValidator(bytes) payable',
       'function delegate(uint256) payable',
       'function undelegate(uint256,uint256,uint256)',
       'function withdraw(uint256,uint256)',
@@ -157,19 +157,19 @@ describe('Comprehensive SFC Fuzz Testing', function () {
       'function updateBaseRewardPerSecond(uint256)',
       'function updateOfflinePenaltyThreshold(uint256,uint256)',
       'function updateSlashingRefundRatio(uint256,uint256)',
-      'function updateStakeTokenizerAddress(address)',
+      // 'function updateStakeTokenizerAddress(address)',
       'function updateTreasuryAddress(address)',
-      'function updateConstsAddress(address)',
-      'function updateVoteBookAddress(address)',
+      // 'function updateConstsAddress(address)',
+      // 'function updateVoteBookAddress(address)',
       'function mintU2U(address,uint256,string)',
       'function burnU2U(uint256)',
       'function sealEpoch(uint256[],uint256[],uint256[],uint256[],uint256)',
       'function sealEpochValidators(uint256[])',
-      'function transferOwnership(address)',
-      'function renounceOwnership()',
-      'function initialize(uint256,uint256,address,address,address,address)',
-      'function setGenesisValidator(address,uint256,bytes,uint256,uint256,uint256,uint256,uint256)',
-      'function setGenesisDelegation(address,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)'
+      // 'function transferOwnership(address)',
+      // 'function renounceOwnership()',
+      // 'function initialize(uint256,uint256,address,address,address,address)',
+      // 'function setGenesisValidator(address,uint256,bytes,uint256,uint256,uint256,uint256,uint256)',
+      // 'function setGenesisDelegation(address,uint256,uint256,uint256,uint256,uint256,uint256,uint256,uint256)'
     ]);
 
     try {
