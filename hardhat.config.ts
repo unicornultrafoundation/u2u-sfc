@@ -1,9 +1,12 @@
-import { HardhatUserConfig } from "hardhat/config";
-import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades"
 import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-ethers';
+import '@openzeppelin/hardhat-upgrades';
 import '@typechain/hardhat';
+import 'hardhat-contract-sizer';
+import 'hardhat-gas-reporter';
+import 'solidity-coverage';
+import { HardhatUserConfig } from "hardhat/types";
 
 const PRIVATE_KEYS = [
   "0x163f5f0f9a621d72fedd85ffca3d08d131ab4e812181e0d30ffd1c885d20aac7",
@@ -43,6 +46,9 @@ const config: HardhatUserConfig = {
     currency: 'USD',
     enabled: !!process.env.REPORT_GAS,
     gasPrice: 50,
+  },
+  contractSizer: {
+    runOnCompile: true,
   },
   solidity: {
     version: '0.5.17',
