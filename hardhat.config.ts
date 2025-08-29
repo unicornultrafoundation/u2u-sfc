@@ -3,11 +3,7 @@ import "@nomicfoundation/hardhat-toolbox";
 import "@openzeppelin/hardhat-upgrades"
 import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-ethers';
-import '@openzeppelin/hardhat-upgrades';
 import '@typechain/hardhat';
-import 'hardhat-contract-sizer';
-import 'hardhat-gas-reporter';
-import 'solidity-coverage';
 
 const PRIVATE_KEYS = [
   "0x163f5f0f9a621d72fedd85ffca3d08d131ab4e812181e0d30ffd1c885d20aac7",
@@ -25,17 +21,21 @@ const PRIVATE_KEYS = [
   "0x4cf757812428b0764a871e94b02ba026a5d3738e69f7d1d4f9f93b43ed00e820",
 ]
 
+const LOCAL_URL = process.env.ETH_NODE_URL || 'http://localhost:8545';
+const REMOTE_URL = process.env.ETH_NODE_URL || ""
+
 const config: HardhatUserConfig = {
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true,
     },
     local: {
-      url: 'http://localhost:8545',
-      accounts: PRIVATE_KEYS
+      url: LOCAL_URL,
+      accounts: PRIVATE_KEYS,
+      gas: 1000_000_000
     },
     ubuntu: {
-      url: 'http://13.213.43.149:8545',
+      url: REMOTE_URL,
       accounts: PRIVATE_KEYS
     }
   },
@@ -43,9 +43,6 @@ const config: HardhatUserConfig = {
     currency: 'USD',
     enabled: !!process.env.REPORT_GAS,
     gasPrice: 50,
-  },
-  contractSizer: {
-    runOnCompile: true,
   },
   solidity: {
     version: '0.5.17',
