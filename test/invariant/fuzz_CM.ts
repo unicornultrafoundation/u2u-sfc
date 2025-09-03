@@ -18,6 +18,7 @@ import {
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
 import { BlockchainNode, ValidatorMetrics } from '../helpers/blockchain';
 import { BigNumberish } from 'ethers';
+import { delay } from './utils';
 
 const pubkey =
   '0xc0048d505c351f4837cec72bce6f4254f5e4bc3f2c9a4816841db64319eee8b714ef9173fbf66d039b782624713791840846b2788d4b65a425adeba85a4b57efe0cd';
@@ -47,12 +48,12 @@ describe('SFC', function () {
     } catch (error) {
       console.log('Contract addresses file not found, using default addresses');
       return {
-        sfc: "0xfc00face00000000000000000000000000000000",
-        nodeDriver: "0xd100a01e00000000000000000000000000000000",
-        nodeDriverAuth: "0xd100ae0000000000000000000000000000000000",
-        evmWriter: "0xd100ec0000000000000000000000000000000000",
-        constants: "0x6CA548f6DF5B540E72262E935b6Fe3e72cDd68C9",
-        sfcProxy: "0x2a57261F79009f35B9b2d4C146471f47BaEf3f77"
+        sfc: '0xfc00face00000000000000000000000000000000',
+        nodeDriver: '0xd100a01e00000000000000000000000000000000',
+        nodeDriverAuth: '0xd100ae0000000000000000000000000000000000',
+        evmWriter: '0xd100ec0000000000000000000000000000000000',
+        constants: '0x6CA548f6DF5B540E72262E935b6Fe3e72cDd68C9',
+        sfcProxy: '0x2a57261F79009f35B9b2d4C146471f47BaEf3f77',
       };
     }
   }
@@ -60,7 +61,7 @@ describe('SFC', function () {
   const fixture = async () => {
     const signers = await ethers.getSigners();
     const addresses = loadContractAddresses();
-    
+
     const sfc = await ethers.getContractAt('SFCI', addresses.sfc);
     const nodeDriver = await ethers.getContractAt('NodeDriver', addresses.nodeDriver);
     const nodeDriverAuth = await ethers.getContractAt('NodeDriverAuth', addresses.nodeDriverAuth);
@@ -86,13 +87,13 @@ describe('SFC', function () {
   });
 
   beforeEach(async function () {
+    await delay(500);
     const tx = await that.constants.updateTargetGasPowerPerSecond(500_000_000); // Ensure target gas power is set before each test
     await tx.wait();
   });
 
   describe('updateMinSelfStake', function () {
     it('should fail if value too small', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: ethers.parseEther('100000') }), // 1 ETH in wei
@@ -105,7 +106,6 @@ describe('SFC', function () {
     });
 
     it('should fail with value too big', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: ethers.parseEther('10000001') }), // 10 ETH in wei
@@ -118,7 +118,6 @@ describe('SFC', function () {
     });
 
     it('should fail with non owner call', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.integer({ min: 1, max: that.signers.length - 1 }), async (index: any) => {
           try {
@@ -137,7 +136,6 @@ describe('SFC', function () {
     });
 
     it('should succeed with valid value', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: ethers.parseEther('100000'), max: ethers.parseEther('10000000') }), // 100k to 10M wei
@@ -157,7 +155,6 @@ describe('SFC', function () {
 
   describe('updateMaxDelegatedRatio', function () {
     it('should fail with non owner call', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.integer({ min: 1, max: that.signers.length - 1 }), async (index: any) => {
           try {
@@ -176,7 +173,6 @@ describe('SFC', function () {
     });
 
     it('should fail with value too small', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: ethers.parseEther('1') }), // 1 ETH in wei
@@ -194,7 +190,6 @@ describe('SFC', function () {
     });
 
     it('should fail with value too big', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: ethers.parseEther('32') }), // 32 ETH in wei
@@ -212,7 +207,6 @@ describe('SFC', function () {
     });
 
     it('should succeed with valid value', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: ethers.parseEther('1'), max: ethers.parseEther('31') }), // 1 to 31 ETH in wei
@@ -233,7 +227,6 @@ describe('SFC', function () {
 
   describe('updateValidatorCommission', function () {
     it('should fail with non owner call', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.integer({ min: 1, max: that.signers.length - 1 }), async (index: any) => {
           try {
@@ -252,10 +245,9 @@ describe('SFC', function () {
     });
 
     it('should fail with value too big', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
-          bigInt({ min: ethers.parseEther("0.5") + 1n }), // More than 100% in basis points
+          bigInt({ min: ethers.parseEther('0.5') + 1n }), // More than 100% in basis points
           async (value: any) => {
             try {
               await expect(that.constants.updateValidatorCommission(value)).to.be.revertedWith('too large value');
@@ -270,10 +262,9 @@ describe('SFC', function () {
     });
 
     it('should succeed with valid value', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
-          bigInt({ min: 1n, max: ethers.parseEther("0.5") }), // Valid range for commission in basis points
+          bigInt({ min: 1n, max: ethers.parseEther('0.5') }), // Valid range for commission in basis points
           async (value: any) => {
             try {
               await that.constants.updateValidatorCommission(value);
@@ -291,7 +282,6 @@ describe('SFC', function () {
 
   describe('updateBurntFeeShare', function () {
     it('should fail with non owner call', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.integer({ min: 1, max: that.signers.length - 1 }), async (index: any) => {
           try {
@@ -310,10 +300,9 @@ describe('SFC', function () {
     });
 
     it('should fail with value too big', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
-          bigInt({ min: ethers.parseEther("0.5") + 1n }), // More than 50%
+          bigInt({ min: ethers.parseEther('0.5') + 1n }), // More than 50%
           async (value: any) => {
             try {
               await expect(that.constants.updateBurntFeeShare(value)).to.be.revertedWith('too large value');
@@ -328,10 +317,9 @@ describe('SFC', function () {
     });
 
     it('should succeed with valid value', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
-          bigInt({ min: 0n, max: ethers.parseEther("0.5") }), // 0% to 50%
+          bigInt({ min: 0n, max: ethers.parseEther('0.5') }), // 0% to 50%
           async (value: any) => {
             try {
               await that.constants.updateBurntFeeShare(value);
@@ -349,7 +337,6 @@ describe('SFC', function () {
 
   describe('updateTreasuryFeeShare', function () {
     it('should fail with non owner call', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.integer({ min: 1, max: that.signers.length - 1 }), async (index: any) => {
           try {
@@ -368,10 +355,9 @@ describe('SFC', function () {
     });
 
     it('should fail with value too big', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
-          bigInt({ min: ethers.parseEther("0.5") + 1n }), // More than 50%
+          bigInt({ min: ethers.parseEther('0.5') + 1n }), // More than 50%
           async (value: any) => {
             try {
               await expect(that.constants.updateTreasuryFeeShare(value)).to.be.revertedWith('too large value');
@@ -386,10 +372,9 @@ describe('SFC', function () {
     });
 
     it('should succeed with valid value', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
-          bigInt({ min: 0n, max: ethers.parseEther("0.5") }), // 0% to 50%
+          bigInt({ min: 0n, max: ethers.parseEther('0.5') }), // 0% to 50%
           async (value: any) => {
             try {
               await that.constants.updateTreasuryFeeShare(value);
@@ -407,7 +392,6 @@ describe('SFC', function () {
 
   describe('updateUnlockedRewardRatio', function () {
     it('should fail with non owner call', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.integer({ min: 1, max: that.signers.length - 1 }), async (index: any) => {
           try {
@@ -426,10 +410,9 @@ describe('SFC', function () {
     });
 
     it('should fail with value too small', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
-          bigInt({ min: 0n, max: ethers.parseEther("0.05") - 1n }), // Less than 5%
+          bigInt({ min: 0n, max: ethers.parseEther('0.05') - 1n }), // Less than 5%
           async (value: any) => {
             try {
               await expect(that.constants.updateUnlockedRewardRatio(value)).to.be.revertedWith('too small value');
@@ -444,10 +427,9 @@ describe('SFC', function () {
     });
 
     it('should fail with value too big', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
-          bigInt({ min: ethers.parseEther("0.5") + 1n }), // More than 50%
+          bigInt({ min: ethers.parseEther('0.5') + 1n }), // More than 50%
           async (value: any) => {
             try {
               await expect(that.constants.updateUnlockedRewardRatio(value)).to.be.revertedWith('too large value');
@@ -462,10 +444,9 @@ describe('SFC', function () {
     });
 
     it('should succeed with valid value', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
-          bigInt({ min: ethers.parseEther("0.05"), max: ethers.parseEther("0.5") }), // 5% to 50%
+          bigInt({ min: ethers.parseEther('0.05'), max: ethers.parseEther('0.5') }), // 5% to 50%
           async (value: any) => {
             try {
               await that.constants.updateUnlockedRewardRatio(value);
@@ -483,7 +464,6 @@ describe('SFC', function () {
 
   describe('updateMinLockupDuration', function () {
     it('should fail with non owner call', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.integer({ min: 1, max: that.signers.length - 1 }), async (index: any) => {
           try {
@@ -502,7 +482,6 @@ describe('SFC', function () {
     });
 
     it('should fail with value too small', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 86399n }), // Less than 1 day
@@ -520,7 +499,6 @@ describe('SFC', function () {
     });
 
     it('should fail with value too big', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: BigInt(86400 * 30 + 1) }), // More than 30 days
@@ -538,7 +516,6 @@ describe('SFC', function () {
     });
 
     it('should succeed with valid value', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 86400n, max: BigInt(86400 * 30) }), // 1 to 30 days
@@ -559,7 +536,6 @@ describe('SFC', function () {
 
   describe('updateMaxLockupDuration', function () {
     it('should fail with non owner call', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.integer({ min: 1, max: that.signers.length - 1 }), async (index: any) => {
           try {
@@ -578,7 +554,6 @@ describe('SFC', function () {
     });
 
     it('should fail with value too small', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: BigInt(86400 * 30 - 1) }), // Less than 30 days
@@ -596,7 +571,6 @@ describe('SFC', function () {
     });
 
     it('should fail with value too big', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: BigInt(86400 * 1460 + 1) }), // More than 4 years (1460 days)
@@ -614,7 +588,6 @@ describe('SFC', function () {
     });
 
     it('should succeed with valid value', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: BigInt(86400 * 30), max: BigInt(86400 * 1460) }), // 30 days to 4 years
@@ -635,7 +608,6 @@ describe('SFC', function () {
 
   describe('updateWithdrawalPeriodEpochs', function () {
     it('should fail with non owner call', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.integer({ min: 1, max: that.signers.length - 1 }), async (index: any) => {
           try {
@@ -654,7 +626,6 @@ describe('SFC', function () {
     });
 
     it('should fail with value too small', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 1n }), // Less than 2
@@ -672,7 +643,6 @@ describe('SFC', function () {
     });
 
     it('should fail with value too big', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 101n }), // More than 100
@@ -690,7 +660,6 @@ describe('SFC', function () {
     });
 
     it('should succeed with valid value', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 2n, max: 100n }), // 2 to 100 epochs
@@ -711,7 +680,6 @@ describe('SFC', function () {
 
   describe('updateWithdrawalPeriodTime', function () {
     it('should fail with non owner call', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.integer({ min: 1, max: that.signers.length - 1 }), async (index: any) => {
           try {
@@ -730,7 +698,6 @@ describe('SFC', function () {
     });
 
     it('should fail with value too small', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 86399n }), // Less than 1 day
@@ -748,7 +715,6 @@ describe('SFC', function () {
     });
 
     it('should fail with value too big', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: BigInt(30 * 86400 + 1) }), // More than 30 days
@@ -766,7 +732,6 @@ describe('SFC', function () {
     });
 
     it('should succeed with valid value', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 86400n, max: BigInt(30 * 86400) }), // 1 to 30 days
@@ -787,7 +752,6 @@ describe('SFC', function () {
 
   describe('updateBaseRewardPerSecond', function () {
     it('should fail with non owner call', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.integer({ min: 1, max: that.signers.length - 1 }), async (index: any) => {
           try {
@@ -806,10 +770,9 @@ describe('SFC', function () {
     });
 
     it('should fail with value too small', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
-          bigInt({ min: 0n, max: ethers.parseEther("0.5") - 1n }), // Less than 0.5 U2U
+          bigInt({ min: 0n, max: ethers.parseEther('0.5') - 1n }), // Less than 0.5 U2U
           async (value: any) => {
             try {
               await expect(that.constants.updateBaseRewardPerSecond(value)).to.be.revertedWith('too small value');
@@ -824,10 +787,9 @@ describe('SFC', function () {
     });
 
     it('should fail with value too big', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
-          bigInt({ min: ethers.parseEther("32") + 1n }), // More than 32 U2U
+          bigInt({ min: ethers.parseEther('32') + 1n }), // More than 32 U2U
           async (value: any) => {
             try {
               await expect(that.constants.updateBaseRewardPerSecond(value)).to.be.revertedWith('too large value');
@@ -842,10 +804,9 @@ describe('SFC', function () {
     });
 
     it('should succeed with valid value', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
-          bigInt({ min: ethers.parseEther("0.5"), max: ethers.parseEther("32") }), // 0.5 to 32 U2U
+          bigInt({ min: ethers.parseEther('0.5'), max: ethers.parseEther('32') }), // 0.5 to 32 U2U
           async (value: any) => {
             try {
               await that.constants.updateBaseRewardPerSecond(value);
@@ -863,7 +824,6 @@ describe('SFC', function () {
 
   describe('updateOfflinePenaltyThresholdTime', function () {
     it('should fail with non owner call', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.integer({ min: 1, max: that.signers.length - 1 }), async (index: any) => {
           try {
@@ -882,13 +842,14 @@ describe('SFC', function () {
     });
 
     it('should fail with value too small', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 86399n }), // Less than 1 day
           async (value: any) => {
             try {
-              await expect(that.constants.updateOfflinePenaltyThresholdTime(value)).to.be.revertedWith('too small value');
+              await expect(that.constants.updateOfflinePenaltyThresholdTime(value)).to.be.revertedWith(
+                'too small value'
+              );
             } catch (error) {
               // console.log(' ---> error: ', error);
               return false;
@@ -900,13 +861,14 @@ describe('SFC', function () {
     });
 
     it('should fail with value too big', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: BigInt(10 * 86400 + 1) }), // More than 10 days
           async (value: any) => {
             try {
-              await expect(that.constants.updateOfflinePenaltyThresholdTime(value)).to.be.revertedWith('too large value');
+              await expect(that.constants.updateOfflinePenaltyThresholdTime(value)).to.be.revertedWith(
+                'too large value'
+              );
             } catch (error) {
               // console.log(' ---> error: ', error);
               return false;
@@ -918,7 +880,6 @@ describe('SFC', function () {
     });
 
     it('should succeed with valid value', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 86400n, max: BigInt(10 * 86400) }), // 1 to 10 days
@@ -939,15 +900,14 @@ describe('SFC', function () {
 
   describe('updateOfflinePenaltyThresholdBlocksNum', function () {
     it('should fail with non owner call', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.integer({ min: 1, max: that.signers.length - 1 }), async (index: any) => {
           try {
             const signer = that.signers[index];
             const value = 1000;
-            await expect(that.constants.connect(signer).updateOfflinePenaltyThresholdBlocksNum(value)).to.be.revertedWith(
-              'Ownable: caller is not the owner'
-            );
+            await expect(
+              that.constants.connect(signer).updateOfflinePenaltyThresholdBlocksNum(value)
+            ).to.be.revertedWith('Ownable: caller is not the owner');
           } catch (error) {
             // console.log(' ---> error: ', error);
             return false;
@@ -958,13 +918,14 @@ describe('SFC', function () {
     });
 
     it('should fail with value too small', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 99n }), // Less than 100
           async (value: any) => {
             try {
-              await expect(that.constants.updateOfflinePenaltyThresholdBlocksNum(value)).to.be.revertedWith('too small value');
+              await expect(that.constants.updateOfflinePenaltyThresholdBlocksNum(value)).to.be.revertedWith(
+                'too small value'
+              );
             } catch (error) {
               // console.log(' ---> error: ', error);
               return false;
@@ -976,13 +937,14 @@ describe('SFC', function () {
     });
 
     it('should fail with value too big', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1000001n }), // More than 1,000,000
           async (value: any) => {
             try {
-              await expect(that.constants.updateOfflinePenaltyThresholdBlocksNum(value)).to.be.revertedWith('too large value');
+              await expect(that.constants.updateOfflinePenaltyThresholdBlocksNum(value)).to.be.revertedWith(
+                'too large value'
+              );
             } catch (error) {
               // console.log(' ---> error: ', error);
               return false;
@@ -994,7 +956,6 @@ describe('SFC', function () {
     });
 
     it('should succeed with valid value', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 100n, max: 1000000n }), // 100 to 1,000,000 blocks
@@ -1015,7 +976,6 @@ describe('SFC', function () {
 
   describe('updateTargetGasPowerPerSecond', function () {
     it('should fail with non owner call', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.integer({ min: 1, max: that.signers.length - 1 }), async (index: any) => {
           try {
@@ -1034,7 +994,6 @@ describe('SFC', function () {
     });
 
     it('should fail with value too small', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 999999n }), // Less than 1,000,000
@@ -1052,7 +1011,6 @@ describe('SFC', function () {
     });
 
     it('should fail with value too big', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 500000001n }), // More than 500,000,000
@@ -1070,7 +1028,6 @@ describe('SFC', function () {
     });
 
     it('should succeed with valid value', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 1000000n, max: 500000000n }), // 1M to 500M gas
@@ -1091,7 +1048,6 @@ describe('SFC', function () {
 
   describe('updateGasPriceBalancingCounterweight', function () {
     it('should fail with non owner call', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.integer({ min: 1, max: that.signers.length - 1 }), async (index: any) => {
           try {
@@ -1110,13 +1066,14 @@ describe('SFC', function () {
     });
 
     it('should fail with value too small', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 99n }), // Less than 100
           async (value: any) => {
             try {
-              await expect(that.constants.updateGasPriceBalancingCounterweight(value)).to.be.revertedWith('too small value');
+              await expect(that.constants.updateGasPriceBalancingCounterweight(value)).to.be.revertedWith(
+                'too small value'
+              );
             } catch (error) {
               // console.log(' ---> error: ', error);
               return false;
@@ -1128,13 +1085,14 @@ describe('SFC', function () {
     });
 
     it('should fail with value too big', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: BigInt(10 * 86400 + 1) }), // More than 10 * 86400 (864,000)
           async (value: any) => {
             try {
-              await expect(that.constants.updateGasPriceBalancingCounterweight(value)).to.be.revertedWith('too large value');
+              await expect(that.constants.updateGasPriceBalancingCounterweight(value)).to.be.revertedWith(
+                'too large value'
+              );
             } catch (error) {
               // console.log(' ---> error: ', error);
               return false;
@@ -1146,7 +1104,6 @@ describe('SFC', function () {
     });
 
     it('should succeed with valid value', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 100n, max: BigInt(10 * 86400) }), // 100 to 864,000
@@ -1165,22 +1122,3 @@ describe('SFC', function () {
     });
   });
 });
-
-const validEthereumAddress = () =>
-  fc
-    .string({
-      minLength: 40,
-      maxLength: 40,
-      unit: fc.constantFrom('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'),
-    })
-    .map((hex) => '0x' + hex)
-    .filter((addr) => ethers.isAddress(addr)); // v6 syntax
-
-export function deriveEthAddressFromKey(privateKey: string): string {
-  const wallet = new ethers.Wallet(privateKey);
-  return wallet.address;
-}
-
-const delay = (ms: number) => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-};

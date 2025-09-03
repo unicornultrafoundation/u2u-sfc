@@ -18,6 +18,7 @@ import {
 import { HardhatEthersSigner } from '@nomicfoundation/hardhat-ethers/signers';
 import { BlockchainNode, ValidatorMetrics } from '../helpers/blockchain';
 import { BigNumberish } from 'ethers';
+import { delay, validEthereumAddress } from './utils';
 
 const pubkey =
   '0xc0048d505c351f4837cec72bce6f4254f5e4bc3f2c9a4816841db64319eee8b714ef9173fbf66d039b782624713791840846b2788d4b65a425adeba85a4b57efe0cd';
@@ -44,12 +45,12 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     } catch (error) {
       console.log('Contract addresses file not found, using default addresses');
       return {
-        sfc: "0xfc00face00000000000000000000000000000000",
-        nodeDriver: "0xd100a01e00000000000000000000000000000000",
-        nodeDriverAuth: "0xd100ae0000000000000000000000000000000000",
-        evmWriter: "0xd100ec0000000000000000000000000000000000",
-        constants: "0x6CA548f6DF5B540E72262E935b6Fe3e72cDd68C9",
-        sfcProxy: "0x2a57261F79009f35B9b2d4C146471f47BaEf3f77"
+        sfc: '0xfc00face00000000000000000000000000000000',
+        nodeDriver: '0xd100a01e00000000000000000000000000000000',
+        nodeDriverAuth: '0xd100ae0000000000000000000000000000000000',
+        evmWriter: '0xd100ec0000000000000000000000000000000000',
+        constants: '0x6CA548f6DF5B540E72262E935b6Fe3e72cDd68C9',
+        sfcProxy: '0x2a57261F79009f35B9b2d4C146471f47BaEf3f77',
       };
     }
   }
@@ -57,7 +58,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
   const fixture = async () => {
     const signers = await ethers.getSigners();
     const addresses = loadContractAddresses();
-    
+
     const sfc = await ethers.getContractAt('SFCI', addresses.sfc);
     const nodeDriver = await ethers.getContractAt('NodeDriver', addresses.nodeDriver);
     const nodeDriverAuth = await ethers.getContractAt('NodeDriverAuth', addresses.nodeDriverAuth);
@@ -81,10 +82,12 @@ describe('SFC Getter Methods Fuzz Tests', function () {
   before(async function () {
     that = await fixture();
   });
+  beforeEach(async function () {
+    await delay(500)
+  });
 
   describe('Basic State Getters', function () {
     it('should return valid currentSealedEpoch', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -102,7 +105,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid currentEpoch', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -121,7 +123,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid totalSupply', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -139,7 +140,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid totalStake', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -157,7 +157,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid totalActiveStake', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -175,7 +174,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid totalSlashedStake', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -193,7 +191,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid lastValidatorID', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -211,7 +208,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid minGasPrice', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -231,7 +227,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Address Getters', function () {
     it('should return valid owner address', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -248,7 +243,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid treasuryAddress', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -267,7 +261,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid stakeTokenizerAddress', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -286,7 +279,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should return valid constsAddress', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -303,7 +295,7 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     // it('should handle voteBookAddress with random addresses', async function () {
-    //   await delay(100);
+    //
     //   fc.assert(
     //     fc.asyncProperty(
     //       validEthereumAddress(),
@@ -327,132 +319,108 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Validator-related Getters', function () {
     it('should handle getValidator with random validatorIDs', async function () {
-      await delay(100);
       fc.assert(
-        fc.asyncProperty(
-          bigInt({ min: 1n, max: 1000n }),
-          async (validatorID: bigint) => {
-            try {
-              const validator = await that.sfc.getValidator(validatorID);
-              expect(validator).to.have.length(7);
-              expect(validator[0]).to.be.a('bigint'); // status
-              expect(validator[1]).to.be.a('bigint'); // deactivatedTime
-              expect(validator[2]).to.be.a('bigint'); // deactivatedEpoch
-              expect(validator[3]).to.be.a('bigint'); // receivedStake
-              expect(validator[4]).to.be.a('bigint'); // createdEpoch
-              expect(validator[5]).to.be.a('bigint'); // createdTime
-              expect(ethers.isAddress(validator[6])).to.be.true; // auth
-              return true;
-            } catch (error) {
-              // console.log(' ---> error: ', error);
-              return false;
-            }
+        fc.asyncProperty(bigInt({ min: 1n, max: 1000n }), async (validatorID: bigint) => {
+          try {
+            const validator = await that.sfc.getValidator(validatorID);
+            expect(validator).to.have.length(7);
+            expect(validator[0]).to.be.a('bigint'); // status
+            expect(validator[1]).to.be.a('bigint'); // deactivatedTime
+            expect(validator[2]).to.be.a('bigint'); // deactivatedEpoch
+            expect(validator[3]).to.be.a('bigint'); // receivedStake
+            expect(validator[4]).to.be.a('bigint'); // createdEpoch
+            expect(validator[5]).to.be.a('bigint'); // createdTime
+            expect(ethers.isAddress(validator[6])).to.be.true; // auth
+            return true;
+          } catch (error) {
+            // console.log(' ---> error: ', error);
+            return false;
           }
-        ),
+        }),
         { numRuns: 10, includeErrorInReport: true }
       );
     });
 
     it('should handle getValidatorID with random addresses', async function () {
-      await delay(100);
       fc.assert(
-        fc.asyncProperty(
-          validEthereumAddress(),
-          async (address: string) => {
-            try {
-              const validatorID = await that.sfc.getValidatorID(address);
-              expect(validatorID).to.be.a('bigint');
-              expect(validatorID).to.be.gte(0n);
-              return true;
-            } catch (error) {
-              // console.log(' ---> error: ', error);
-              return false;
-            }
+        fc.asyncProperty(validEthereumAddress(), async (address: string) => {
+          try {
+            const validatorID = await that.sfc.getValidatorID(address);
+            expect(validatorID).to.be.a('bigint');
+            expect(validatorID).to.be.gte(0n);
+            return true;
+          } catch (error) {
+            // console.log(' ---> error: ', error);
+            return false;
           }
-        ),
+        }),
         { numRuns: 10, includeErrorInReport: true }
       );
     });
 
     it('should handle getValidatorPubkey with random validatorIDs', async function () {
-      await delay(100);
       fc.assert(
-        fc.asyncProperty(
-          bigInt({ min: 1n, max: 1000n }),
-          async (validatorID: bigint) => {
-            try {
-              const pubkey = await that.sfc.getValidatorPubkey(validatorID);
-              expect(pubkey).to.be.a('string');
-              return true;
-            } catch (error) {
-              // console.log(' ---> error: ', error);
-              return false;
-            }
+        fc.asyncProperty(bigInt({ min: 1n, max: 1000n }), async (validatorID: bigint) => {
+          try {
+            const pubkey = await that.sfc.getValidatorPubkey(validatorID);
+            expect(pubkey).to.be.a('string');
+            return true;
+          } catch (error) {
+            // console.log(' ---> error: ', error);
+            return false;
           }
-        ),
+        }),
         { numRuns: 10, includeErrorInReport: true }
       );
     });
 
     it('should handle getSelfStake with random validatorIDs', async function () {
-      await delay(100);
       fc.assert(
-        fc.asyncProperty(
-          bigInt({ min: 1n, max: 1000n }),
-          async (validatorID: bigint) => {
-            try {
-              const selfStake = await that.sfc.getSelfStake(validatorID);
-              expect(selfStake).to.be.a('bigint');
-              expect(selfStake).to.be.gte(0n);
-              return true;
-            } catch (error) {
-              // console.log(' ---> error: ', error);
-              return false;
-            }
+        fc.asyncProperty(bigInt({ min: 1n, max: 1000n }), async (validatorID: bigint) => {
+          try {
+            const selfStake = await that.sfc.getSelfStake(validatorID);
+            expect(selfStake).to.be.a('bigint');
+            expect(selfStake).to.be.gte(0n);
+            return true;
+          } catch (error) {
+            // console.log(' ---> error: ', error);
+            return false;
           }
-        ),
+        }),
         { numRuns: 10, includeErrorInReport: true }
       );
     });
 
     it('should handle isSlashed with random validatorIDs', async function () {
-      await delay(100);
       fc.assert(
-        fc.asyncProperty(
-          bigInt({ min: 1n, max: 1000n }),
-          async (validatorID: bigint) => {
-            try {
-              const isSlashed = await that.sfc.isSlashed(validatorID);
-              expect(isSlashed).to.be.a('boolean');
-              return true;
-            } catch (error) {
-              // console.log(' ---> error: ', error);
-              return false;
-            }
+        fc.asyncProperty(bigInt({ min: 1n, max: 1000n }), async (validatorID: bigint) => {
+          try {
+            const isSlashed = await that.sfc.isSlashed(validatorID);
+            expect(isSlashed).to.be.a('boolean');
+            return true;
+          } catch (error) {
+            // console.log(' ---> error: ', error);
+            return false;
           }
-        ),
+        }),
         { numRuns: 10, includeErrorInReport: true }
       );
     });
 
     it('should handle slashingRefundRatio with random validatorIDs', async function () {
-      await delay(100);
       fc.assert(
-        fc.asyncProperty(
-          bigInt({ min: 1n, max: 1000n }),
-          async (validatorID: bigint) => {
-            try {
-              const ratio = await that.sfc.slashingRefundRatio(validatorID);
-              expect(ratio).to.be.a('bigint');
-              expect(ratio).to.be.gte(0n);
-              expect(ratio).to.be.lte(ethers.parseEther('1')); // Should not exceed 100%
-              return true;
-            } catch (error) {
-              // console.log(' ---> error: ', error);
-              return false;
-            }
+        fc.asyncProperty(bigInt({ min: 1n, max: 1000n }), async (validatorID: bigint) => {
+          try {
+            const ratio = await that.sfc.slashingRefundRatio(validatorID);
+            expect(ratio).to.be.a('bigint');
+            expect(ratio).to.be.gte(0n);
+            expect(ratio).to.be.lte(ethers.parseEther('1')); // Should not exceed 100%
+            return true;
+          } catch (error) {
+            // console.log(' ---> error: ', error);
+            return false;
           }
-        ),
+        }),
         { numRuns: 10, includeErrorInReport: true }
       );
     });
@@ -460,7 +428,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Staking-related Getters', function () {
     it('should handle getStake with random parameters', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -482,7 +449,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getLockedStake with random parameters', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -504,7 +470,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getUnlockedStake with random parameters', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -526,7 +491,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle isLockedUp with random parameters', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -547,7 +511,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getLockupInfo with random parameters', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -574,7 +537,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Rewards-related Getters', function () {
     it('should handle pendingRewards with random parameters', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -596,7 +558,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle rewardsStash with random parameters', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -618,7 +579,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getStashedLockupRewards with random parameters', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -642,7 +602,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle stashedRewardsUntilEpoch with random parameters', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -666,58 +625,49 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Epoch-related Getters', function () {
     it('should handle getEpochSnapshot with random epochs', async function () {
-      await delay(100);
       fc.assert(
-        fc.asyncProperty(
-          bigInt({ min: 0n, max: 1000n }),
-          async (epoch: bigint) => {
-            try {
-              const snapshot = await that.sfc.getEpochSnapshot(epoch);
-              expect(snapshot).to.have.length(7);
-              expect(snapshot[0]).to.be.a('bigint'); // endTime
-              expect(snapshot[1]).to.be.a('bigint'); // epochFee
-              expect(snapshot[2]).to.be.a('bigint'); // totalBaseRewardWeight
-              expect(snapshot[3]).to.be.a('bigint'); // totalTxRewardWeight
-              expect(snapshot[4]).to.be.a('bigint'); // baseRewardPerSecond
-              expect(snapshot[5]).to.be.a('bigint'); // totalStake
-              expect(snapshot[6]).to.be.a('bigint'); // totalSupply
-              return true;
-            } catch (error) {
-              // console.log(' ---> error: ', error);
-              return false;
-            }
+        fc.asyncProperty(bigInt({ min: 0n, max: 1000n }), async (epoch: bigint) => {
+          try {
+            const snapshot = await that.sfc.getEpochSnapshot(epoch);
+            expect(snapshot).to.have.length(7);
+            expect(snapshot[0]).to.be.a('bigint'); // endTime
+            expect(snapshot[1]).to.be.a('bigint'); // epochFee
+            expect(snapshot[2]).to.be.a('bigint'); // totalBaseRewardWeight
+            expect(snapshot[3]).to.be.a('bigint'); // totalTxRewardWeight
+            expect(snapshot[4]).to.be.a('bigint'); // baseRewardPerSecond
+            expect(snapshot[5]).to.be.a('bigint'); // totalStake
+            expect(snapshot[6]).to.be.a('bigint'); // totalSupply
+            return true;
+          } catch (error) {
+            // console.log(' ---> error: ', error);
+            return false;
           }
-        ),
+        }),
         { numRuns: 10, includeErrorInReport: true }
       );
     });
 
     it('should handle getEpochValidatorIDs with random epochs', async function () {
-      await delay(100);
       fc.assert(
-        fc.asyncProperty(
-          bigInt({ min: 0n, max: 100n }),
-          async (epoch: bigint) => {
-            try {
-              const validatorIDs = await that.sfc.getEpochValidatorIDs(epoch);
-              expect(Array.isArray(validatorIDs)).to.be.true;
-              for (const id of validatorIDs) {
-                expect(id).to.be.a('bigint');
-                expect(id).to.be.gt(0n);
-              }
-              return true;
-            } catch (error) {
-              // console.log(' ---> error: ', error);
-              return false;
+        fc.asyncProperty(bigInt({ min: 0n, max: 100n }), async (epoch: bigint) => {
+          try {
+            const validatorIDs = await that.sfc.getEpochValidatorIDs(epoch);
+            expect(Array.isArray(validatorIDs)).to.be.true;
+            for (const id of validatorIDs) {
+              expect(id).to.be.a('bigint');
+              expect(id).to.be.gt(0n);
             }
+            return true;
+          } catch (error) {
+            // console.log(' ---> error: ', error);
+            return false;
           }
-        ),
+        }),
         { numRuns: 10, includeErrorInReport: true }
       );
     });
 
     it('should handle getEpochReceivedStake with random parameters', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 100n }),
@@ -739,7 +689,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getEpochAccumulatedRewardPerToken with random parameters', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 100n }),
@@ -761,7 +710,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getEpochAccumulatedUptime with random parameters', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 100n }),
@@ -783,7 +731,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getEpochAccumulatedOriginatedTxsFee with random parameters', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 100n }),
@@ -805,7 +752,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getEpochOfflineTime with random parameters', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 100n }),
@@ -827,7 +773,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should handle getEpochOfflineBlocks with random parameters', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           bigInt({ min: 0n, max: 100n }),
@@ -851,7 +796,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Withdrawal-related Getters', function () {
     it('should handle getWithdrawalRequest with random parameters', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -878,8 +822,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Ownership and Version', function () {
     it('should return valid isOwner', async function () {
-      await delay(100);
-
       fc.assert(
         fc.asyncProperty(
           fc.integer({ min: 1, max: that.signers.length - 1 }),
@@ -896,11 +838,10 @@ describe('SFC Getter Methods Fuzz Tests', function () {
           }
         ),
         { numRuns: 10, includeErrorInReport: true }
-      )
+      );
     });
 
     it('should return valid version', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -920,7 +861,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
 
   describe('Consistency Tests', function () {
     it('should maintain totalActiveStake <= totalStake', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -938,7 +878,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should maintain lockedStake <= totalStake for any delegator', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(
           validEthereumAddress(),
@@ -960,7 +899,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
 
     it('should have currentEpoch = currentSealedEpoch + 1', async function () {
-      await delay(100);
       fc.assert(
         fc.asyncProperty(fc.constant(null), async () => {
           try {
@@ -978,17 +916,3 @@ describe('SFC Getter Methods Fuzz Tests', function () {
     });
   });
 });
-
-const validEthereumAddress = () =>
-  fc
-    .string({
-      minLength: 40,
-      maxLength: 40,
-      unit: fc.constantFrom('0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'),
-    })
-    .map((hex) => '0x' + hex)
-    .filter((addr) => ethers.isAddress(addr));
-
-const delay = (ms: number) => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-};

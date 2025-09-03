@@ -123,7 +123,6 @@
 //                 gasLimit: gasLimit
 //               });
 //               await tx.wait();
-//               await delay(100);
 //               return true;
 //             } catch (error: any) {
 //               const errorMessage = error.message || error.toString();
@@ -164,7 +163,6 @@
 //                 gasLimit: gasLimit
 //               });
 //               await tx.wait();
-//               await delay(100);
 //               return true;
 //             } catch (error: any) {
 //               const errorMessage = error.message || error.toString();
@@ -204,7 +202,6 @@
 //                 gasLimit: gasLimit
 //               });
 //               await tx.wait();
-//               await delay(100);
 //               return true;
 //             } catch (error: any) {
 //               const errorMessage = error.message || error.toString();
@@ -245,7 +242,6 @@
 //                 gasLimit: gasLimit
 //               });
 //               await tx.wait();
-//               await delay(100);
 //               return true;
 //             } catch (error: any) {
 //               const errorMessage = error.message || error.toString();
@@ -285,7 +281,6 @@
 //                 gasLimit: gasLimit
 //               });
 //               await tx.wait();
-//               await delay(100);
 //               return true;
 //             } catch (error: any) {
 //               const errorMessage = error.message || error.toString();
@@ -314,7 +309,6 @@
 //     });
 
 //     it('should test restakeRewards with various gas limits', async function () {
-//       await delay(100);
 //       fc.assert(
 //         fc.asyncProperty(
 //           gasLimitArb,
@@ -325,7 +319,6 @@
 //                 gasLimit: gasLimit
 //               });
 //               await tx.wait();
-//               await delay(100);
 //               return true;
 //             } catch (error: any) {
 //               const errorMessage = error.message || error.toString();
@@ -368,7 +361,6 @@
 //                 gasLimit: gasLimit
 //               });
 //               await tx.wait();
-//               await delay(100);
 //               return true;
 //             } catch (error: any) {
 //               const errorMessage = error.message || error.toString();
@@ -408,7 +400,6 @@
 //                 gasLimit: gasLimit
 //               });
 //               await tx.wait();
-//               await delay(100);
 //               return true;
 //             } catch (error: any) {
 //               const errorMessage = error.message || error.toString();
@@ -449,7 +440,6 @@
 //                 gasLimit: gasLimit
 //               });
 //               await tx.wait();
-//               await delay(100);
 //               return true;
 //             } catch (error: any) {
 //               const errorMessage = error.message || error.toString();
@@ -490,7 +480,6 @@
 //                 gasLimit: gasLimit
 //               });
 //               await tx.wait();
-//               await delay(100);
 //               return true;
 //             } catch (error: any) {
 //               const errorMessage = error.message || error.toString();
@@ -527,7 +516,6 @@
 //                 gasLimit: gasLimit
 //               });
 //               await tx.wait();
-//               await delay(100);
 //               return true;
 //             } catch (error: any) {
 //               const errorMessage = error.message || error.toString();
@@ -567,7 +555,6 @@
 //                 gasLimit: gasLimit
 //               });
 //               await tx.wait();
-//               await delay(100);
 //               return true;
 //             } catch (error: any) {
 //               const errorMessage = error.message || error.toString();
@@ -605,7 +592,6 @@
 //                 gasLimit: gasLimit
 //               });
 //               await tx.wait();
-//               await delay(100);
 //               return true;
 //             } catch (error: any) {
 //               const errorMessage = error.message || error.toString();
@@ -649,7 +635,6 @@
 //                 gasLimit: effectiveGasLimit
 //               });
 //               await tx.wait();
-//               await delay(100);
 //               return true;
 //             } catch (error: any) {
 //               const errorMessage = error.message || error.toString();

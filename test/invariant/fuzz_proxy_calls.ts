@@ -3,6 +3,7 @@ import { ethers } from 'hardhat';
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import * as fs from 'fs';
 import * as path from 'path';
+import { delay } from './utils';
 
 describe('Comprehensive SFC Fuzz Testing', function () {
   const addressesFilePath = path.join(__dirname, 'contract-addresses.json');
@@ -586,8 +587,3 @@ describe('Comprehensive SFC Fuzz Testing', function () {
     });
   });
 });
-
-// Simple delay to avoid rate limits or nonce issues
-function delay(ms: number) {
-  return new Promise( resolve => setTimeout(resolve, ms) );
-}
