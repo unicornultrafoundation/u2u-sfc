@@ -79,7 +79,10 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
 
   before(async function () {
     that = await fixture();
-    await that.constants.updateTargetGasPowerPerSecond(500_000_000); // Ensure target gas power is set before tests
+  });
+  
+  beforeEach(async function () {
+    await that.constants.updateTargetGasPowerPerSecond(500_000_000); // Ensure target gas power is set before each test
   });
 
   describe('Ownership Functions', function () {

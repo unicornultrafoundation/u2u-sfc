@@ -426,7 +426,8 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
     this.beforeEach(async function () {
       // Reset state before each test
       that = await fixture();
-      await that.constants.updateTargetGasPowerPerSecond(500_000_000); // Ensure target gas power is set before tests
+      const tx = await that.constants.updateTargetGasPowerPerSecond(500_000_000); // Ensure target gas power is set before tests
+      await tx.wait();
     });
     
     it('should maintain state consistency after random operation sequences', async function () {
