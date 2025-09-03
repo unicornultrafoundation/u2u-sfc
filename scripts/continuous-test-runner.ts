@@ -1,380 +1,169 @@
-#!/usr/bin/env tsx
+#!/usr/bin/env -S bunx tsx
 
-import { spawn, ChildProcess } from 'child_process';
-import { createWriteStream, WriteStream } from 'fs';
-import path from 'path';
+import { spawn } from 'child_process';
 
-/**
- * Continuous Test Runner for U2U SFC Project
- * 
- * Runs `bunx hardhat test --network ubuntu` continuously, restarting on any failure.
- * Features:
- * - Automatic restart on process exit/crash
- * - Comprehensive logging with timestamps
- * - Graceful shutdown handling
- * - Process monitoring and statistics
- * - Log rotation to prevent disk space issues
- */
+interface Config {
+  testCommand: string[];
+  updateScriptCommand: string[];
+  testDelay: number;
+  updateRetryDelay: number;
+  maxRetries: number;
+}
+
+function createConfig(network: string): Config {
+  return {
+    testCommand: ['bunx', 'hardhat', 'test', '--network', network],
+    updateScriptCommand: ['bunx', 'hardhat', 'run', 'scripts/update-target-gas-power.ts', '--network', network],
+    testDelay: 20000,
+    updateRetryDelay: 30000,
+    maxRetries: 3
+  };
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function log(message: string): void {
+  console.log(`[${new Date().toISOString()}] ${message}`);
+}
+
+async function runCommand(command: string[], description: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    log(`🚀 Starting ${description}`);
+    
+    const childProcess = spawn(command[0], command.slice(1), {
+      stdio: 'inherit',
+      env: process.env
+    });
+
+    childProcess.on('exit', (code: number | null) => {
+      if (code === 0) {
+        log(`✅ ${description} completed successfully`);
+        resolve();
+      } else {
+        reject(new Error(`${description} failed with exit code ${code}`));
+      }
+    });
+
+    childProcess.on('error', (error: Error) => {
+      log(`❌ ${description} error: ${error.message}`);
+      reject(error);
+    });
+  });
+}
+
+async function runWithRetry(command: string[], description: string, maxRetries: number, retryDelay: number): Promise<void> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      await runCommand(command, `${description} (attempt ${attempt})`);
+      return;
+    } catch (error: any) {
+      log(`❌ ${description} failed on attempt ${attempt}: ${error.message}`);
+      if (attempt === maxRetries) {
+        throw error;
+      }
+      await delay(retryDelay);
+    }
+  }
+}
 class ContinuousTestRunner {
-  private process: ChildProcess | null = null;
-  private logStream: WriteStream | null = null;
   private runCount = 0;
   private startTime = new Date();
   private isShuttingDown = false;
-  private testDelay = 20000; // 20 seconds between test runs
-  private updateScriptRetryDelay = 30000; // 30 seconds between update script retries
-  private maxLogSize = 100 * 1024 * 1024; // 100MB max log file size
+  private config: Config;
 
-  private readonly command = 'bunx';
-  private readonly args = ['hardhat', 'test', '--network', 'ubuntu'];
-  private readonly logDir = path.join(process.cwd(), 'logs');
-  private readonly logFile = path.join(this.logDir, `test-runner-${Date.now()}.log`);
-
-  constructor() {
-    this.setupLogging();
+  constructor(network: string) {
+    this.config = createConfig(network);
     this.setupSignalHandlers();
     this.start();
   }
 
-  private setupLogging(): void {
-    try {
-      // Ensure logs directory exists
-      const fs = require('fs');
-      if (!fs.existsSync(this.logDir)) {
-        fs.mkdirSync(this.logDir, { recursive: true });
-      }
-
-      // Create log stream
-      this.logStream = createWriteStream(this.logFile, { flags: 'a' });
-      
-      this.log('🚀 Continuous Test Runner Started');
-      this.log(`📁 Log file: ${this.logFile}`);
-      this.log(`⚙️  Command: ${this.command} ${this.args.join(' ')}`);
-    } catch (error) {
-      console.error('❌ Failed to setup logging:', error);
-      process.exit(1);
-    }
-  }
-
   private setupSignalHandlers(): void {
-    // Handle graceful shutdown
-    const shutdown = (signal: string) => {
-      this.log(`🛑 Received ${signal}, shutting down gracefully...`);
+    const shutdown = () => {
+      log('🛑 Shutting down gracefully...');
       this.isShuttingDown = true;
-      
-      if (this.process) {
-        this.log('⏹️  Killing test process...');
-        this.process.kill('SIGTERM');
-        
-        // Force kill after 10 seconds if still running
-        setTimeout(() => {
-          if (this.process && !this.process.killed) {
-            this.log('💀 Force killing test process...');
-            this.process.kill('SIGKILL');
-          }
-        }, 10000);
-      }
-
-      // Close log stream and exit
-      setTimeout(() => {
-        this.cleanup();
-        process.exit(0);
-      }, 2000);
+      this.printStats();
+      process.exit(0);
     };
 
-    process.on('SIGINT', () => shutdown('SIGINT'));
-    process.on('SIGTERM', () => shutdown('SIGTERM'));
-    process.on('SIGHUP', () => shutdown('SIGHUP'));
-
-    // Handle uncaught exceptions
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
+    process.on('SIGHUP', shutdown);
+    
     process.on('uncaughtException', (error) => {
-      this.log(`💥 Uncaught exception: ${error.message}`);
-      this.log(`📋 Stack trace: ${error.stack}`);
-      // Don't exit, just log and continue
+      log(`💥 Uncaught exception: ${error.message}`);
     });
 
-    process.on('unhandledRejection', (reason, promise) => {
-      this.log(`💥 Unhandled rejection at ${promise}: ${reason}`);
-      // Don't exit, just log and continue
+    process.on('unhandledRejection', (reason) => {
+      log(`💥 Unhandled rejection: ${reason}`);
     });
-  }
-
-  private log(message: string): void {
-    const timestamp = new Date().toISOString();
-    const logMessage = `[${timestamp}] ${message}\n`;
-    
-    // Write to console
-    console.log(`[${timestamp}] ${message}`);
-    
-    // Write to log file if available
-    if (this.logStream && this.logStream.writable) {
-      this.logStream.write(logMessage);
-      
-      // Check log file size and rotate if needed
-      this.checkLogRotation();
-    }
-  }
-
-  private checkLogRotation(): void {
-    try {
-      const fs = require('fs');
-      const stats = fs.statSync(this.logFile);
-      
-      if (stats.size > this.maxLogSize) {
-        this.log('📋 Rotating log file...');
-        this.logStream?.end();
-        
-        // Archive current log
-        const archiveFile = this.logFile.replace('.log', `-${Date.now()}.log`);
-        fs.renameSync(this.logFile, archiveFile);
-        
-        // Create new log stream
-        this.logStream = createWriteStream(this.logFile, { flags: 'a' });
-        this.log('📋 Log rotation completed');
-      }
-    } catch (error) {
-      // Ignore rotation errors, keep running
-      // console.warn('⚠️  Log rotation failed:', error);
-    }
   }
 
   private async start(): Promise<void> {
-    // Run the update-target-gas-power script first with retry logic
-    await this.runUpdateTargetGasPowerScriptWithRetry();
-
-    await delay(20000);
-
-    if (this.isShuttingDown) return;
-
-    this.runCount++;
-    const uptime = Math.round((Date.now() - this.startTime.getTime()) / 1000);
-    
-    this.log(`\n🏃 Starting test run #${this.runCount} (uptime: ${uptime}s)`);
-    this.log(`📋 Working directory: ${process.cwd()}`);
-
     try {
-      // Spawn the test process
-      this.process = spawn(this.command, this.args, {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        cwd: process.cwd(),
-        env: {
-          ...process.env,
-          // Ensure bun/bunx is available
-          PATH: process.env.PATH,
-          NODE_ENV: process.env.NODE_ENV || 'test'
-        },
-        shell: process.platform === 'win32' // Use shell on Windows
-      });
-
-      // Handle process startup
-      this.process.on('spawn', () => {
-        this.log(`✅ Test process spawned (PID: ${this.process?.pid})`);
-      });
-
-      // Handle stdout
-      this.process.stdout?.on('data', (data) => {
-        const output = data.toString().trim();
-        if (output) {
-          // Split output into lines and log each one
-          output.split('\n').forEach((line: string) => {
-            if (line.trim()) {
-              this.log(`📤 ${line.trim()}`);
-            }
-          });
-        }
-      });
-
-      // Handle stderr
-      this.process.stderr?.on('data', (data) => {
-        const error = data.toString().trim();
-        if (error) {
-          error.split('\n').forEach((line: string) => {
-            if (line.trim()) {
-              this.log(`❌ ${line.trim()}`);
-            }
-          });
-        }
-      });
-
-      // Handle process exit
-      this.process.on('exit', (code, signal) => {
-        this.log(`🏁 Test process exited (code: ${code}, signal: ${signal})`);
-        
-        if (!this.isShuttingDown) {
-          this.log(`⏰ Waiting ${this.testDelay}ms before next test run...`);
-          setTimeout(() => this.start(), this.testDelay);
-        }
-      });
-
-      // Handle process errors
-      this.process.on('error', (error) => {
-        this.log(`💥 Process error: ${error.message}`);
-        
-        // Common error handling
-        if (error.message.includes('ENOENT')) {
-          this.log('❌ Command not found. Make sure bunx is installed and available in PATH');
-          this.log('💡 Try: npm install -g bun or curl -fsSL https://bun.sh/install | bash');
-        }
-        
-        if (!this.isShuttingDown) {
-          this.log(`⏰ Restarting in ${this.testDelay}ms...`);
-          setTimeout(() => this.start(), this.testDelay);
-        }
-      });
-
-      // Prevent process from hanging
-      this.process.unref();
-
+      await runWithRetry(this.config.updateScriptCommand, 'Update target gas power script', this.config.maxRetries, this.config.updateRetryDelay);
+      await delay(this.config.testDelay);
     } catch (error: any) {
-      this.log(`💥 Failed to start process: ${error.message}`);
-      
-      if (!this.isShuttingDown) {
-        this.log(`⏰ Retrying in ${this.testDelay}ms...`);
-        setTimeout(() => this.start(), this.testDelay);
-      }
+      log(`❌ Update script failed after ${this.config.maxRetries} attempts: ${error.message}`);
+      log('⏰ Continuing with test runs...');
     }
-  }
-
-  private async runUpdateTargetGasPowerScriptWithRetry(): Promise<void> {
-    let attempt = 1;
-    const maxAttempts = Number.MAX_SAFE_INTEGER; // Retry indefinitely until success
 
     while (!this.isShuttingDown) {
       try {
-        this.log(`🎢 Running update-target-gas-power script (attempt ${attempt})...`);
-        await this.runUpdateTargetGasPowerScript();
-        this.log('✅ Update target gas power script completed successfully');
-        return; // Success, exit retry loop
+        this.runCount++;
+        const uptime = Math.round((Date.now() - this.startTime.getTime()) / 1000);
+        log(`\n🏃 Starting test run #${this.runCount} (uptime: ${uptime}s)`);
+        
+        await runCommand(this.config.testCommand, 'Test suite');
+        
       } catch (error: any) {
-        this.log(`❌ Update target gas power script failed on attempt ${attempt}: ${error.message}`);
-        
-        if (this.isShuttingDown) {
-          this.log('🛑 Shutting down, stopping retry attempts');
-          return;
-        }
-        
-        this.log(`⏰ Retrying update script in ${this.updateScriptRetryDelay / 1000} seconds...`);
-        await delay(this.updateScriptRetryDelay);
-        attempt++;
+        log(`❌ Test run failed: ${error.message}`);
+      }
+
+      if (!this.isShuttingDown) {
+        log(`⏰ Waiting ${this.config.testDelay / 1000} seconds before next run...`);
+        await delay(this.config.testDelay);
       }
     }
   }
 
-  private async runUpdateTargetGasPowerScript(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const updateProcess = spawn('bunx', ['hardhat', 'run', 'scripts/update-target-gas-power.ts', '--network', 'ubuntu'], {
-        stdio: ['pipe', 'pipe', 'pipe'],
-        cwd: process.cwd(),
-        env: {
-          ...process.env,
-          // Pass through environment variables for configuration
-          CONSTANTS_MANAGER_ADDRESS: process.env.CONSTANTS_MANAGER_ADDRESS,
-          TARGET_GAS_POWER: process.env.TARGET_GAS_POWER
-        }
-      });
-
-      let stdout = '';
-      let stderr = '';
-
-      // Capture output
-      updateProcess.stdout?.on('data', (data) => {
-        const output = data.toString();
-        stdout += output;
-        // Log each line from the update script
-        output.split('\n').forEach((line: string) => {
-          if (line.trim()) {
-            this.log(`📤 ${line.trim()}`);
-          }
-        });
-      });
-
-      updateProcess.stderr?.on('data', (data) => {
-        const error = data.toString();
-        stderr += error;
-        error.split('\n').forEach((line: string) => {
-          if (line.trim()) {
-            this.log(`❌ ${line.trim()}`);
-          }
-        });
-      });
-
-      updateProcess.on('exit', (code, signal) => {
-        if (code === 0) {
-          resolve();
-        } else {
-          reject(new Error(`Update script failed with code ${code}, signal: ${signal}`));
-        }
-      });
-
-      updateProcess.on('error', (error) => {
-        if (error.message.includes('ENOENT')) {
-          this.log('💡 Make sure bun is installed: curl -fsSL https://bun.sh/install | bash');
-        }
-        reject(error);
-      });
-
-      // Set a timeout for the update script (2 minutes)
-      setTimeout(() => {
-        if (!updateProcess.killed) {
-          this.log('⏰ Update script timed out, killing process...');
-          updateProcess.kill('SIGTERM');
-          setTimeout(() => {
-            if (!updateProcess.killed) {
-              updateProcess.kill('SIGKILL');
-            }
-          }, 5000);
-          reject(new Error('Update script timed out'));
-        }
-      }, 120000); // 2 minutes timeout
-    });
-  }
-
-  private cleanup(): void {
-    this.log('🧹 Cleaning up resources...');
-    
-    if (this.logStream) {
-      this.logStream.end();
-      this.logStream = null;
-    }
-
+  private printStats(): void {
     const uptime = Math.round((Date.now() - this.startTime.getTime()) / 1000);
     console.log(`\n📊 Final Statistics:`);
     console.log(`   Total runs: ${this.runCount}`);
     console.log(`   Total uptime: ${uptime} seconds`);
-    console.log(`   Log file: ${this.logFile}`);
     console.log(`\n👋 Continuous Test Runner stopped gracefully`);
   }
 
-  // Public method to get current statistics
   public getStats() {
     const uptime = Math.round((Date.now() - this.startTime.getTime()) / 1000);
     return {
       runCount: this.runCount,
-      uptime,
-      isRunning: this.process !== null && !this.process.killed,
-      pid: this.process?.pid,
-      logFile: this.logFile
+      uptime
     };
   }
 }
 
-// Start the continuous test runner
 if (require.main === module) {
-  console.log('🎯 U2U SFC Continuous Test Runner');
-  console.log('📋 This will run tests continuously on the ubuntu network');
-  console.log('🛑 Press Ctrl+C to stop gracefully\n');
+  const network = process.argv[2] || 'ubuntu';
+  
+  if (!['local', 'ubuntu'].includes(network)) {
+    console.error('❌ Invalid network. Use "local" or "ubuntu"');
+    console.log('Usage: tsx scripts/continuous-test-runner.ts [local|ubuntu]');
+    process.exit(1);
+  }
 
-  const runner = new ContinuousTestRunner();
+  log('🎯 U2U SFC Continuous Test Runner');
+  log(`📋 Running tests continuously on the ${network} network`);
+  log('🛑 Press Ctrl+C to stop gracefully\n');
 
-  // Optional: Print stats every 5 minutes
+  const runner = new ContinuousTestRunner(network);
+
   setInterval(() => {
     const stats = runner.getStats();
-    console.log(`\n📊 Stats: ${stats.runCount} runs, ${stats.uptime}s uptime, PID: ${stats.pid || 'N/A'}`);
+    log(`📊 Stats: ${stats.runCount} runs, ${stats.uptime}s uptime`);
   }, 5 * 60 * 1000);
 }
 
 export default ContinuousTestRunner;
-
-const delay = (ms: number) => {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-};
