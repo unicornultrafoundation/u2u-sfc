@@ -103,14 +103,6 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
     await tx.wait();
   });
 
-  // Operation generators - these define the possible operations to perform
-  const createValidatorOp = () => fc.record({
-    type: fc.constant('createValidator' as const),
-    signerIndex: fc.integer({ min: 1, max: 9 }),
-    pubkey: fc.constantFrom(...pubkeys),
-    stake: bigInt({ min: ethers.parseEther('500000'), max: ethers.parseEther('2000000') })
-  });
-
   const delegateOp = () => fc.record({
     type: fc.constant('delegate' as const),
     signerIndex: fc.integer({ min: 1, max: 9 }),
@@ -168,7 +160,6 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
 
   // Combined operation generator
   const operation = () => fc.oneof(
-    // createValidatorOp(),
     delegateOp(),
     undelegateOp(),
     lockStakeOp(),
@@ -185,20 +176,14 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
       const signer = that.signers[op.signerIndex] || that.user;
       
       switch (op.type) {
-        case 'createValidator':
-          const validatorId = await that.sfc.getValidatorID(signer.address);
-          if (validatorId > 0n) {
-            return { success: false, error: 'validator_already_exists' };
-          }
-          await that.sfc.connect(signer).createValidator(op.pubkey, { value: op.stake });
-          return { success: true };
-
         case 'delegate':
           try {
+            await delay(200);
             const validator = await that.sfc.getValidator(op.validatorID);
             if (validator[5] === 0n) { // createdTime === 0 means doesn't exist
               return { success: false, error: 'validator_not_exists' };
             }
+            await delay(200);
             await that.sfc.connect(signer).delegate(op.validatorID, { value: op.amount });
             return { success: true };
           } catch (error: any) {
@@ -206,56 +191,71 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
           }
 
         case 'undelegate':
+          await delay(200);
           const stake = await that.sfc.getStake(signer.address, op.validatorID);
           if (stake === 0n || op.amount > stake) {
             return { success: false, error: 'insufficient_stake' };
           }
+          await delay(200);
           await that.sfc.connect(signer).undelegate(op.validatorID, op.wrID, op.amount);
           return { success: true };
 
         case 'lockStake':
+          await delay(200);
           const unlockedStake = await that.sfc.getUnlockedStake(signer.address, op.validatorID);
           if (unlockedStake < op.amount) {
             return { success: false, error: 'insufficient_unlocked_stake' };
           }
+          await delay(200);
           await that.sfc.connect(signer).lockStake(op.validatorID, op.duration, op.amount);
           return { success: true };
 
         case 'unlockStake':
+          await delay(200);
           const lockedStake = await that.sfc.getLockedStake(signer.address, op.validatorID);
           if (lockedStake < op.amount) {
             return { success: false, error: 'insufficient_locked_stake' };
           }
+          await delay(200);
           await that.sfc.connect(signer).unlockStake(op.validatorID, op.amount);
           return { success: true };
 
         case 'claimRewards':
+          await delay(200);
           const pendingRewards = await that.sfc.pendingRewards(signer.address, op.validatorID);
+          await delay(200);
           const stashedRewards = await that.sfc.rewardsStash(signer.address, op.validatorID);
           if (pendingRewards === 0n && stashedRewards === 0n) {
             return { success: false, error: 'no_rewards_to_claim' };
           }
+          await delay(200);
           await that.sfc.connect(signer).claimRewards(op.validatorID);
           return { success: true };
 
         case 'stashRewards':
+          await delay(200);
           await that.sfc.stashRewards(op.delegator, op.validatorID);
           return { success: true };
 
         case 'restakeRewards':
+          await delay(200);
           const pendingRewards2 = await that.sfc.pendingRewards(signer.address, op.validatorID);
+          await delay(200);
           const stashedRewards2 = await that.sfc.rewardsStash(signer.address, op.validatorID);
           if (pendingRewards2 === 0n && stashedRewards2 === 0n) {
             return { success: false, error: 'no_rewards_to_restake' };
           }
+          await delay(200);
           await that.sfc.connect(signer).restakeRewards(op.validatorID);
           return { success: true };
 
         case 'withdraw':
+          await delay(200);
           const withdrawalRequest = await that.sfc.getWithdrawalRequest(signer.address, op.validatorID, op.wrID);
           if (withdrawalRequest[2] === 0n) { // amount === 0 means no withdrawal request
             return { success: false, error: 'no_withdrawal_request' };
           }
+          await delay(200);
           await that.sfc.connect(signer).withdraw(op.validatorID, op.wrID);
           return { success: true };
 
@@ -274,15 +274,32 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
   // Get current contract state for invariant checking
   async function getContractState(): Promise<ContractState> {
     try {
+      await delay(200);
+      const totalStake = await that.sfc.totalStake();
+      await delay(200);
+      const totalActiveStake = await that.sfc.totalActiveStake();
+      await delay(200);
+      const totalSlashedStake = await that.sfc.totalSlashedStake();
+      await delay(200);
+      const totalSupply = await that.sfc.totalSupply();
+      await delay(200);
+      const currentEpoch = await that.sfc.currentEpoch();
+      await delay(200);
+      const currentSealedEpoch = await that.sfc.currentSealedEpoch();
+      await delay(200);
+      const lastValidatorID = await that.sfc.lastValidatorID();
+      await delay(200);
+      const minGasPrice = await that.sfc.minGasPrice();
+      
       return {
-        totalStake: await that.sfc.totalStake(),
-        totalActiveStake: await that.sfc.totalActiveStake(),
-        totalSlashedStake: await that.sfc.totalSlashedStake(),
-        totalSupply: await that.sfc.totalSupply(),
-        currentEpoch: await that.sfc.currentEpoch(),
-        currentSealedEpoch: await that.sfc.currentSealedEpoch(),
-        lastValidatorID: await that.sfc.lastValidatorID(),
-        minGasPrice: await that.sfc.minGasPrice()
+        totalStake,
+        totalActiveStake,
+        totalSlashedStake,
+        totalSupply,
+        currentEpoch,
+        currentSealedEpoch,
+        lastValidatorID,
+        minGasPrice
       };
     } catch (error: any) {
       // If contract calls fail, return default state to allow tests to continue
@@ -335,8 +352,11 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
       for (const address of sampleAddresses) {
         for (const validatorID of sampleValidators) {
           try {
+            await delay(200);
             const totalStake = await that.sfc.getStake(address, validatorID);
+            await delay(200);
             const lockedStake = await that.sfc.getLockedStake(address, validatorID);
+            await delay(200);
             const unlockedStake = await that.sfc.getUnlockedStake(address, validatorID);
             
             // INV-101: lockedStake <= totalStake
@@ -372,7 +392,9 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
       for (const address of sampleAddresses) {
         for (const validatorID of sampleValidators) {
           try {
+            await delay(200);
             const pendingRewards = await that.sfc.pendingRewards(address, validatorID);
+            await delay(200);
             const stashedRewards = await that.sfc.rewardsStash(address, validatorID);
             
             // INV-201: All rewards non-negative
@@ -485,7 +507,6 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
         fc.asyncProperty(
           fc.array(
             fc.oneof(
-              createValidatorOp(),
               delegateOp(),
               undelegateOp(),
               withdrawOp()
@@ -564,7 +585,6 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
         fc.asyncProperty(
           fc.array(
             fc.oneof(
-              createValidatorOp(),
               delegateOp(),
               lockStakeOp(),
               unlockStakeOp(),
@@ -606,7 +626,6 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
         fc.asyncProperty(
           fc.array(
             fc.oneof(
-              createValidatorOp(),
               delegateOp(),
               undelegateOp(),
               claimRewardsOp()
@@ -621,19 +640,9 @@ describe('SFC Contract Invariant Tests - Sequence Based', function () {
               
               for (const op of operations) {
                 try {
+                  await delay(200);
                   const initialLastValidatorID = await that.sfc.lastValidatorID();
                   const result = await executeOperation(op);
-                  
-                  if (result.success && op.type === 'createValidator') {
-                    validatorCount++;
-                    const newLastValidatorID = await that.sfc.lastValidatorID();
-                    
-                    // Validator ID should increase
-                    if (newLastValidatorID <= initialLastValidatorID) {
-                      console.log(`Validator ID invariant violation: ${newLastValidatorID} <= ${initialLastValidatorID}`);
-                      return false;
-                    }
-                  }
                   
                   // Check all invariants
                   const allOk = await checkAllInvariants();

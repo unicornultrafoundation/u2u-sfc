@@ -83,7 +83,7 @@ describe('SFC State-Changing Functions Fuzz Tests', function () {
   });
   
   beforeEach(async function () {
-    await delay(500);
+    await delay(200);
     const tx = await that.constants.updateTargetGasPowerPerSecond(500_000_000); // Ensure target gas power is set before each test
     await tx.wait();
   });

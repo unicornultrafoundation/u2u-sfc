@@ -82,9 +82,6 @@ describe('SFC Getter Methods Fuzz Tests', function () {
   before(async function () {
     that = await fixture();
   });
-  beforeEach(async function () {
-    await delay(500)
-  });
 
   describe('Basic State Getters', function () {
     it('should return valid currentSealedEpoch', async function () {
